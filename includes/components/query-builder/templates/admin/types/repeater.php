@@ -143,6 +143,20 @@
 			v-model="query.fields_list"
 			v-if="'custom' === query.source"
 		></cx-vui-textarea>
+		<cx-vui-input
+			label="<?php _e( 'Show/Per Page Limit', 'jet-engine' ); ?>"
+			description="<?php _e( 'If using with JetSmartFilters pagination - its number of returned items per page. If without pagination - its number of visible items in the listing grid.', 'jet-engine' ); ?>"
+			:wrapper-css="[ 'equalwidth', 'has-macros' ]"
+			size="fullwidth"
+			v-model="query.per_page"
+		><jet-query-dynamic-args v-model="dynamicQuery.limit_per_page"></jet-query-dynamic-args></cx-vui-input>
+		<cx-vui-input
+			label="<?php _e( 'Offset', 'jet-engine' ); ?>"
+			description="<?php _e( 'Number of items to skip from start.', 'jet-engine' ); ?>"
+			:wrapper-css="[ 'equalwidth', 'has-macros' ]"
+			size="fullwidth"
+			v-model="query.offset"
+		><jet-query-dynamic-args v-model="dynamicQuery.offset"></jet-query-dynamic-args></cx-vui-input>
 		<cx-vui-switcher
 			label="<?php _e( 'Use Preview Settings for Listing Item', 'jet-engine' ); ?>"
 			description="<?php _e( 'If checked, the same post and query string will be used for Listing Item preview based on this query.', 'jet-engine' ); ?>"

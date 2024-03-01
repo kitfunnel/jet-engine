@@ -62,13 +62,6 @@ if ( ! class_exists( 'Jet_Engine_CPT' ) ) {
 		 */
 		public $built_in_defaults = array();
 
-		/**
-		 * Meta fields with `save custom` option
-		 *
-		 * @var array
-		 */
-		public $meta_fields_save_custom = array();
-
 		public $edit_links = array();
 
 		/**
@@ -212,6 +205,11 @@ if ( ! class_exists( 'Jet_Engine_CPT' ) ) {
 							if ( ! empty( $args['hide_field_names'] ) ) {
 								$this->meta_boxes_args[ $post_type ]['hide_field_names'] = $args['hide_field_names'];
 							}
+
+							$box_id = ! empty( $built_in['id'] ) ? $built_in['id'] : 'built_in_' . $post_type;
+
+							$this->meta_boxes_args[ $post_type ]['id'] = $box_id;
+							$this->meta_boxes_args[ $post_type ]['is_built_in'] = true;
 
 							$this->meta_boxes[ $post_type ] = $meta_fields;
 							if ( jet_engine()->meta_boxes ) {
@@ -387,6 +385,8 @@ if ( ! class_exists( 'Jet_Engine_CPT' ) ) {
 						$this->meta_boxes_args[ $post_type['slug'] ]['hide_field_names'] = $post_type['hide_field_names'];
 					}
 
+					$this->meta_boxes_args[ $post_type['slug'] ]['id'] = $post_type['id'];
+
 					$this->meta_boxes[ $post_type['slug'] ] = $post_type['meta_fields'];
 
 					if ( jet_engine()->meta_boxes ) {
@@ -417,8 +417,16 @@ if ( ! class_exists( 'Jet_Engine_CPT' ) ) {
 
 				}
 
-				if ( ! isset( $args['map_meta_cap'] ) ) {
+				/*
+				if ( ! isset( $post_type['map_meta_cap'] ) ) {
 					$post_type['map_meta_cap'] = true;
+				}
+				*/
+
+				$post_type['map_meta_cap'] = true;
+
+				if ( empty( $post_type['supports'] ) ) {
+					$post_type['supports'] = false;
 				}
 
 				jet_engine()->add_instance( 'post-type', $post_type );
@@ -522,9 +530,17 @@ if ( ! class_exists( 'Jet_Engine_CPT' ) ) {
 
 			foreach ( $this->meta_boxes as $post_type => $meta_box ) {
 
-				$this->find_meta_fields_with_save_custom( $post_type, $meta_box );
-
 				$args = ! empty( $this->meta_boxes_args[ $post_type ] ) ? $this->meta_boxes_args[ $post_type ] : array();
+				$is_built_in = isset( $args['is_built_in'] ) ? $args['is_built_in'] : false;
+
+				Jet_Engine_Meta_Boxes_Option_Sources::instance()->find_meta_fields_with_save_custom( 
+					'post',
+					$post_type,
+					$meta_box,
+					$args['id'],
+					$this->data,
+					$is_built_in
+				);
 
 				$meta_instance = new Jet_Engine_CPT_Meta( $post_type, $meta_box, '', 'normal', 'high', $args );
 
@@ -534,115 +550,6 @@ if ( ! class_exists( 'Jet_Engine_CPT' ) ) {
 
 			}
 
-			$this->add_hooks_to_save_custom_values();
-
-		}
-
-		/**
-		 * Find meta fields with enabling `save custom` option
-		 *
-		 * @param $post_type
-		 * @param $fields
-		 */
-		public function find_meta_fields_with_save_custom( $post_type, $fields ) {
-
-			foreach ( $fields as $field ) {
-
-				if ( empty( $field['object_type'] ) ) {
-					continue;
-				}
-
-				if ( 'field' !== $field['object_type'] || ! in_array( $field['type'], array( 'checkbox', 'radio' ) ) ) {
-					continue;
-				}
-
-				$allow_custom = ! empty( $field['allow_custom'] ) && filter_var( $field['allow_custom'], FILTER_VALIDATE_BOOLEAN );
-				$save_custom  = ! empty( $field['save_custom'] ) && filter_var( $field['save_custom'], FILTER_VALIDATE_BOOLEAN );
-
-				if ( ! $allow_custom || ! $save_custom ) {
-					continue;
-				}
-
-				if ( empty( $this->meta_fields_save_custom[ $post_type ] ) ) {
-					$this->meta_fields_save_custom[ $post_type ] = array();
-				}
-
-				$this->meta_fields_save_custom[ $post_type ][ $field['name'] ] = $field;
-			}
-		}
-
-		/**
-		 * Add hooks to save custom values
-		 */
-		public function add_hooks_to_save_custom_values() {
-
-			if ( empty( $this->meta_fields_save_custom ) ) {
-				return;
-			}
-
-			foreach ( $this->meta_fields_save_custom as $post_type => $fields ) {
-				add_action( "save_post_{$post_type}", array( $this, 'save_custom_values' ) );
-			}
-		}
-
-		/**
-		 * Save custom values
-		 *
-		 * @param $id Post ID
-		 */
-		public function save_custom_values( $id ) {
-
-			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-				return;
-			}
-
-			if ( empty( $_POST ) || ! isset( $_POST['_wpnonce'] ) ) {
-				return;
-			}
-
-			if ( ! current_user_can( 'edit_post', $id ) ) {
-				return;
-			}
-
-			$post_type = get_post_type( $id );
-
-			$item = $this->data->db->query(
-				$this->data->table,
-				array(
-					'slug' => $post_type,
-				)
-			);
-
-			if ( empty( $item ) ) {
-				return;
-			}
-
-			$item        = $item[0];
-			$meta_fields = maybe_unserialize( $item['meta_fields'] );
-			$update_meta = false;
-
-			foreach ( $this->meta_fields_save_custom[ $post_type ] as $field => $field_args ) {
-
-				if ( ! isset( $_POST[ $field ] ) || '' === $_POST[ $field ] ) {
-					continue;
-				}
-
-				do_action( 'jet-engine/meta-boxes/save-custom-value', $field, $field_args );
-
-				$_meta_fields = jet_engine()->meta_boxes->maybe_add_custom_values_to_options( $meta_fields, $field, $field_args );
-
-				if ( $_meta_fields ) {
-					$meta_fields = $_meta_fields;
-					$update_meta = true;
-				}
-
-			}
-
-			if ( $update_meta ) {
-				$item['meta_fields'] = maybe_serialize( $meta_fields );
-				$this->data->query_args['status'] = $item['status'];
-				$this->data->update_item_in_db( $item );
-			}
 		}
 
 		/**

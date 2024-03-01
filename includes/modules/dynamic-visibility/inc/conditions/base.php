@@ -145,8 +145,8 @@ abstract class Base {
 
 		switch ( $data_type ) {
 			case 'numeric':
-				$current_value    = intval( $current_value );
-				$value_to_compare = intval( $value_to_compare );
+				$current_value    = floatval( $current_value );
+				$value_to_compare = floatval( $value_to_compare );
 				break;
 
 			case 'datetime':

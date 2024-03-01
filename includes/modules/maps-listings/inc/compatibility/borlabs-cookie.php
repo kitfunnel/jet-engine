@@ -32,6 +32,10 @@ class Borlabs_Cookie {
 			return $html;
 		}
 
+		if ( ! function_exists( 'BorlabsCookieHelper' ) ) {
+			return $html;
+		}
+
 		$content_blocker_data = BorlabsCookieHelper()->getContentBlockerData( 'googlemaps' );
 
 		// Only modify when Google Maps Content Blocker is active.

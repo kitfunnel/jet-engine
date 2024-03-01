@@ -13,6 +13,12 @@ if ( ! class_exists( 'Jet_Engine_CPT_Admin_Columns' ) ) {
 	class Jet_Engine_CPT_Admin_Columns {
 
 		/**
+		 * Post type slug
+		 * @var string
+		 */
+		public $post_type = null;
+
+		/**
 		 * Registered admin columns
 		 * @var array
 		 */
@@ -38,6 +44,7 @@ if ( ! class_exists( 'Jet_Engine_CPT_Admin_Columns' ) ) {
 		 */
 		public function __construct( $post_type, $columns ) {
 
+			$this->post_type     = $post_type;
 			$this->admin_columns = $columns;
 
 			add_filter( 'manage_' . $post_type . '_posts_columns', array( $this, 'edit_columns' ) );
@@ -133,6 +140,12 @@ if ( ! class_exists( 'Jet_Engine_CPT_Admin_Columns' ) ) {
 		 * @return [type]        [description]
 		 */
 		public function sort_columns( $query ) {
+
+			$post_type = $query->get( 'post_type' );
+
+			if ( ! is_string( $post_type ) || $post_type !== $this->post_type ) {
+				return;
+			}
 
 			$orderby = $query->get( 'orderby' );
 

@@ -180,6 +180,12 @@ if ( ! class_exists( 'Jet_Engine_Listings' ) ) {
 			) );
 		}
 
+		public function ensure_listing_doc_class() {
+			if ( ! class_exists( 'Jet_Engine_Listings_Document' ) ) {
+				require jet_engine()->plugin_path( 'includes/components/listings/document.php' );
+			}
+		}
+
 		/**
 		 * Returns new listing document
 		 *
@@ -188,9 +194,7 @@ if ( ! class_exists( 'Jet_Engine_Listings' ) ) {
 		 */
 		public function get_new_doc( $setting = array(), $id = null ) {
 
-			if ( ! class_exists( 'Jet_Engine_Listings_Document' ) ) {
-				require jet_engine()->plugin_path( 'includes/components/listings/document.php' );
-			}
+			$this->ensure_listing_doc_class();
 
 			return new Jet_Engine_Listings_Document( $setting, $id );
 		}

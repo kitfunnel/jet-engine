@@ -183,6 +183,17 @@ class Manager {
 			10, 3
 		);
 
+		add_filter(
+			'jet-engine/listing/grid/queried-id',
+			array( $this, 'modify_listing_queried_id_attr' ),
+			10, 3
+		);
+
+		add_filter(
+			'jet-engine/listings/data/object-by-id',
+			array( $this, 'set_cct_object_by_id' ),
+			10, 3
+		);
 	}
 
 	public function get_object_date( $date, $object ) {
@@ -247,6 +258,8 @@ class Manager {
 		$redirect = ! empty( $_GET['redirect'] ) ? esc_url( $_GET['redirect'] ) : home_url( '/' );
 
 		if ( $redirect ) {
+			// Fixed '&' encoding
+			$redirect = str_replace( '&#038;', '&', $redirect );
 			wp_redirect( $redirect );
 			die();
 		}
@@ -295,7 +308,7 @@ class Manager {
 
 	public function set_item_id( $id, $object ) {
 
-		if ( isset( $object->cct_slug ) ) {
+		if ( isset( $object->cct_slug ) && isset( $object->_ID ) ) {
 			$id = $object->_ID;
 		}
 
@@ -570,7 +583,7 @@ class Manager {
 		?>
 		<div class="jet-listings-popup__form-row jet-template-listing jet-template-<?php echo $this->source; ?>">
 			<label for="listing_content_type"><?php esc_html_e( 'From content type:', 'jet-engine' ); ?></label>
-			<select id="listing_content_type" name="listing_content_type">
+			<select id="listing_content_type" name="cct_type" class="jet-listings-popup__control">
 				<option value=""><?php _e( 'Select content type...', 'jet-engine' ); ?></option>
 				<?php
 				foreach ( Module::instance()->manager->get_content_types() as $type => $instance ) {
@@ -640,11 +653,11 @@ class Manager {
 
 			case $this->source:
 
-				if ( empty( $_REQUEST['listing_content_type'] ) ) {
+				if ( empty( $_REQUEST['cct_type'] ) ) {
 					return $template_data;
 				}
 
-				$cct = esc_attr( $_REQUEST['listing_content_type'] );
+				$cct = esc_attr( $_REQUEST['cct_type'] );
 
 				$template_data['meta_input']['_listing_data']['post_type']                    = $cct;
 				$template_data['meta_input']['_elementor_page_settings']['listing_post_type'] = $cct;
@@ -703,6 +716,7 @@ class Manager {
 		}
 
 		$content_type = false;
+		$from_field   = false;
 
 		if ( $this->source === $source ) {
 
@@ -715,6 +729,7 @@ class Manager {
 			if ( ! empty( $r_field ) ) {
 				$r_field_data = explode( '__', $r_field );
 				$content_type = $r_field_data[0];
+				$from_field   = $r_field_data[1];
 			}
 		}
 
@@ -733,12 +748,21 @@ class Manager {
 
 		$items = $type->db->query( array(), 1 );
 
+		if ( ! empty( $items ) && false !== $from_field ) {
+			$items = ( isset( $items[0]->$from_field ) && is_array( $items[0]->$from_field ) )
+						? array_values( $items[0]->$from_field )
+						: [];
+		}
+
 		if ( ! empty( $items ) ) {
 
-			$items[0]->cct_slug = $content_type;
+			$item = is_object( $items[0] ) ? $items[0] : (object) $items[0];
 
-			jet_engine()->listings->data->set_current_object( $items[0] );
-			return $items[0];
+			$item->cct_slug = $content_type;
+			jet_engine()->listings->data->set_current_object( $item );
+
+			return $item;
+
 		} else {
 			return false;
 		}
@@ -826,7 +850,9 @@ class Manager {
 		$count = count( $value );
 		$current_object = jet_engine()->listings->data->get_current_object();
 
-		$query = array_fill( 0, $count, $current_object );
+		foreach ( $value as $item ) {
+			$query[] = (object) array_merge( (array) $current_object, (array) $item );
+		}
 
 		$widget->query_vars['page']    = 1;
 		$widget->query_vars['pages']   = 1;
@@ -943,6 +969,46 @@ class Manager {
 		}
 
 		return $attr;
+	}
+
+	public function modify_listing_queried_id_attr( $queried_id, $object_id, $object ) {
+
+		if ( isset( $object->cct_slug ) ) {
+			$queried_id = sprintf( '%s|cct:%s', $object_id, $object->cct_slug );
+		}
+
+		return $queried_id;
+	}
+
+	public function set_cct_object_by_id( $object, $object_id, $object_type ) {
+
+		if ( empty( $object_type ) || 0 !== strpos( $object_type, 'cct:' ) || empty( $object_id ) ) {
+			return $object;
+		}
+
+		$object_type = explode( ':', $object_type );
+		$cct_slug    = ! empty( $object_type[1] ) ? $object_type[1] : false;
+
+		if ( ! $cct_slug ) {
+			return $object;
+		}
+
+		$content_type = Module::instance()->manager->get_content_types( $cct_slug );
+
+		if ( ! $content_type ) {
+			return $object;
+		}
+
+		$flag = \OBJECT;
+		$content_type->db->set_format_flag( $flag );
+
+		$item = $content_type->db->get_item( $object_id );
+
+		if ( empty( $item ) ) {
+			return $object;
+		}
+
+		return $item;
 	}
 
 }

@@ -28,6 +28,13 @@ const JetLeafletPopup = function( data ) {
 	}
 
 	this.setContent = function( content ) {
+		// Convert a content to an HTMLElement to store the HTML manipulation in a popup
+		if ( typeof content.nodeType === 'undefined' ) {
+			let contentHtml = document.createElement( 'div' );
+			contentHtml.innerHTML = content;
+			content = contentHtml;
+		}
+
 		this.popupContent = content;
 		this.popup.setContent( content );
 	}
@@ -37,6 +44,10 @@ const JetLeafletPopup = function( data ) {
 };
 
 window.JetEngineMapsProvider = function() {
+
+	this.getId = function() {
+		return 'leaflet';
+	}
 
 	this.initMap = function( container, settings ) {
 
@@ -150,7 +161,20 @@ window.JetEngineMapsProvider = function() {
 	}
 
 	this.getMarkerCluster = function( data ) {
-		var markersGrpup = L.markerClusterGroup();
+		let options = {};
+
+		const optionsMap = {
+			disableClusteringAtZoom: 'clusterMaxZoom',
+			maxClusterRadius: 'clusterRadius',
+		};
+
+		for ( const [ optionKey, settingsKey ] of Object.entries( optionsMap ) ) {
+			if ( undefined !== data[ settingsKey ] && '' !== data[ settingsKey ]  ) {
+				options[ optionKey ] = data[ settingsKey ];
+			}
+		}
+
+		var markersGrpup = L.markerClusterGroup( options );
 		markersGrpup.addLayers( data.markers );
 		data.map.addLayer( markersGrpup );
 		return markersGrpup;

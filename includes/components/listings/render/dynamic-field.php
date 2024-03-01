@@ -13,6 +13,7 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Field' ) ) {
 	class Jet_Engine_Render_Dynamic_Field extends Jet_Engine_Render_Base {
 
 		public $show_field     = true;
+		public $show_fallback  = false;
 		public $more_string    = '...';
 		public $excerpt_length = '...';
 		public $prevent_icon   = false;
@@ -66,13 +67,7 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Field' ) ) {
 			return absint( $this->excerpt_length );
 		}
 
-		/**
-		 * Render post/term field content
-		 *
-		 * @param  array $settings Widget settings.
-		 * @return void
-		 */
-		public function render_field_content( $settings ) {
+		public function get_field_content( $settings ) {
 
 			$source         = $this->get( 'dynamic_field_source' );
 			$object_context = $this->get( 'object_context' );
@@ -279,10 +274,10 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Field' ) ) {
 
 			if ( $hide_if_empty && Jet_Engine_Tools::is_empty( $result ) ) {
 				$this->show_field = false;
-				return;
+				return null;
 			} elseif ( Jet_Engine_Tools::is_empty( $result ) && ! Jet_Engine_Tools::is_empty( $settings, 'field_fallback' ) ) {
-				echo wp_kses_post( $settings['field_fallback'] );
-				return;
+				$this->show_fallback = true;
+				return wp_kses_post( $settings['field_fallback'] );
 			}
 
 			$this->need_sanitize = apply_filters(
@@ -292,6 +287,25 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Field' ) ) {
 
 			if ( $this->need_sanitize && is_string( $result ) ) {
 				$result = wp_kses_post( $result );
+			}
+
+			return $result;
+
+		}
+
+		/**
+		 * Render post/term field content
+		 *
+		 * @param  array $settings Widget settings.
+		 * @return void
+		 */
+		public function render_field_content( $settings ) {
+
+			$result = $this->get_field_content( $settings );
+
+			if ( ! $this->show_field || $this->show_fallback ) {
+				echo $result;
+				return;
 			}
 
 			$this->render_filtered_result( $result, $settings );
@@ -331,7 +345,15 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Field' ) ) {
 				}
 
 				$result = ! is_array( $result ) && ! is_object( $result ) ? $result : '';
-				$result = sprintf( $settings['dynamic_field_format'], $result );
+
+				try {
+					$result = sprintf( $settings['dynamic_field_format'], $result );
+				} catch ( ArgumentCountError $e ) {
+					printf( '<b>%1$s:</b> %2$s', esc_html__( 'Error', 'jet-engine' ), $e->getMessage() );
+
+					return;
+				}
+
 				$result = jet_engine()->listings->macros->do_macros( $result );
 				$result = do_shortcode( $result );
 			}

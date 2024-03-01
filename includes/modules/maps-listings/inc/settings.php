@@ -240,6 +240,8 @@ class Settings {
 						></cx-vui-f-select>
 					</div>
 				</cx-vui-popup>
+
+				<?php do_action( 'jet-engine/maps-listing/settings/after-controls' ); ?>
 			</div>
 		</script>
 		<?php

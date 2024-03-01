@@ -42,8 +42,9 @@ class REST_API_Query extends \Jet_Engine\Query_Builder\Queries\Base_Query {
 			$result = array();
 		}
 
-		array_walk( $result, function( &$item ) {
+		array_walk( $result, function( &$item, $key ) {
 			$item->is_rest_api_endpoint = true;
+			$item->_rest_api_item_id = $this->id . '-' . $key;
 		} );
 
 		return $result;

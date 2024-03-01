@@ -258,10 +258,10 @@ if ( ! class_exists( 'Jet_Engine_Blocks_Views_Type_Base' ) ) {
 			}
 
 			$content = $render->get_content();
-			$el_id = ! empty( $attributes['_element_id'] ) ? : '';
+			$el_id = ! empty( $attributes['_element_id'] ) ? $attributes['_element_id'] : '';
 
 			if ( $el_id ) {
-				$this->_root['id'] = $el_id;
+				$this->_root['id'] = esc_attr( $el_id );
 			}
 
 			$this->_root['data-is-block'] = $this->get_block_name();

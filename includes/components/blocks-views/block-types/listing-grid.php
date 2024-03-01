@@ -177,6 +177,10 @@ if ( ! class_exists( 'Jet_Engine_Blocks_Views_Type_Grid' ) ) {
 					'type' => 'number',
 					'default' => 5000,
 				),
+				'pause_on_hover' => array(
+					'type' => 'boolean',
+					'default' => true,
+				),
 				'infinite' => array(
 					'type' => 'boolean',
 					'default' => true,
@@ -463,6 +467,38 @@ if ( ! class_exists( 'Jet_Engine_Blocks_Views_Type_Grid' ) ) {
 					'id'        => 'section_slider_style',
 					'condition' => array(
 						'carousel_enabled' => true,
+					),
+				)
+			);
+
+			$this->controls_manager->add_control(
+				array(
+					'id'    => 'center_mode_padding',
+					'label' => __( 'Center Mode Padding', 'jet-engine' ),
+					'type'  => 'range',
+					'units' => array(
+						array(
+							'value'     => 'px',
+							'intervals' => array(
+								'step' => 1,
+								'min'  => 0,
+								'max'  => 200,
+							),
+						),
+						array(
+							'value'     => '%',
+							'intervals' => array(
+								'step' => 1,
+								'min'  => 0,
+								'max'  => 100,
+							),
+						),
+					),
+					'css_selector' => array(
+						'{{WRAPPER}} .jet-listing-grid__slider > .jet-listing-grid__items > .slick-list' => 'padding: 0 {{VALUE}}{{UNIT}} !important;',
+					),
+					'condition' => array(
+						'center_mode' => true,
 					),
 				)
 			);

@@ -56,13 +56,6 @@ if ( ! class_exists( 'Jet_Engine_Options_Pages' ) ) {
 		public $options_list = array();
 
 		/**
-		 * Option fields with `save custom` option
-		 *
-		 * @var array
-		 */
-		public $option_fields_save_custom = array();
-
-		/**
 		 * Init data instance
 		 *
 		 * @return [type] [description]
@@ -153,7 +146,13 @@ if ( ! class_exists( 'Jet_Engine_Options_Pages' ) ) {
 					$children[] = $item;
 				}
 
-				$this->find_option_fields_with_save_custom( $item['slug'], $item['fields'], $item['capability'] );
+				Jet_Engine_Meta_Boxes_Option_Sources::instance()->find_meta_fields_with_save_custom( 
+					'options',
+					$item['slug'],
+					$item['fields'],
+					$item['id'],
+					$this->data
+				);
 
 			}
 
@@ -163,107 +162,6 @@ if ( ! class_exists( 'Jet_Engine_Options_Pages' ) ) {
 				}
 			}
 
-			$this->add_hooks_to_save_custom_values();
-
-		}
-
-		/**
-		 * Find option fields with enabling `save custom` option
-		 *
-		 * @param $page
-		 * @param $fields
-		 * @param $capability
-		 */
-		public function find_option_fields_with_save_custom( $page, $fields, $capability ) {
-			foreach ( $fields as $field ) {
-
-				if ( 'field' !== $field['object_type'] || ! in_array( $field['type'], array( 'checkbox', 'radio' ) ) ) {
-					continue;
-				}
-
-				$allow_custom = ! empty( $field['allow_custom'] ) && filter_var( $field['allow_custom'], FILTER_VALIDATE_BOOLEAN );
-				$save_custom  = ! empty( $field['save_custom'] ) && filter_var( $field['save_custom'], FILTER_VALIDATE_BOOLEAN );
-
-				if ( ! $allow_custom || ! $save_custom ) {
-					continue;
-				}
-
-				if ( empty( $this->option_fields_save_custom[ $page ] ) ) {
-					$this->option_fields_save_custom[ $page ] = array(
-						'capability' => ! empty( $capability ) ? $capability : 'manage_options',
-						'fields'     => array(),
-					);
-				}
-
-				$this->option_fields_save_custom[ $page ]['fields'][ $field['name'] ] = $field;
-			}
-		}
-
-		/**
-		 * Add hooks to save custom values
-		 */
-		public function add_hooks_to_save_custom_values() {
-
-			if ( empty( $this->option_fields_save_custom ) ) {
-				return;
-			}
-
-			add_action( 'admin_init', array( $this, 'save_custom_values' ) );
-		}
-
-		/**
-		 * Save custom values
-		 */
-		public function save_custom_values() {
-
-			if ( ! isset( $_REQUEST['action'] ) || 'jet-engine-op-save-settings' !== $_REQUEST['action']
-			     || ! isset( $_REQUEST['page'] ) || ! in_array( $_REQUEST['page'], array_keys( $this->option_fields_save_custom ) )
-			) {
-				return;
-			}
-
-			$page       = $_REQUEST['page'];
-			$capability = $this->option_fields_save_custom[ $page ]['capability'];
-
-			if ( ! current_user_can( $capability ) ) {
-				return;
-			}
-
-			$query_args = array_merge( $this->data->query_args, array( 'slug' => $page ) );
-
-			$item = $this->data->db->query(
-				$this->data->table,
-				$query_args
-			);
-
-			if ( empty( $item ) ) {
-				return;
-			}
-
-			$item        = $item[0];
-			$meta_fields = maybe_unserialize( $item['meta_fields'] );
-			$update      = false;
-
-			foreach ( $this->option_fields_save_custom[ $page ]['fields'] as $field => $field_args ) {
-
-				if ( ! isset( $_POST[ $field ] ) || '' === $_POST[ $field ] ) {
-					continue;
-				}
-
-				do_action( 'jet-engine/meta-boxes/save-custom-value', $field, $field_args );
-
-				$_meta_fields = jet_engine()->meta_boxes->maybe_add_custom_values_to_options( $meta_fields, $field, $field_args );
-
-				if ( $_meta_fields ) {
-					$meta_fields = $_meta_fields;
-					$update      = true;
-				}
-			}
-
-			if ( $update ) {
-				$item['meta_fields'] = maybe_serialize( $meta_fields );
-				$this->data->update_item_in_db( $item );
-			}
 		}
 
 		/**

@@ -62,6 +62,8 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes_Page_Edit' ) ) {
 
 			wp_enqueue_script( 'jet-plugins' );
 
+			do_action( 'jet-engine/meta-fields/enqueue-assets' );
+
 			wp_enqueue_script(
 				'jet-engine-admin-tools',
 				jet_engine()->plugin_url( 'assets/js/admin/tools.js' ),
@@ -86,10 +88,11 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes_Page_Edit' ) ) {
 				true
 			);
 
-			$title         = ! empty( $args['title'] ) ? $args['title'] : __( 'Meta fields', 'jet-engine' );
-			$button        = ! empty( $args['button'] ) ? $args['button'] : __( 'New Meta Field', 'jet-engine' );
-			$disabled      = ! empty( $args['disabled'] ) ? $args['disabled'] : array();
-			$allowed_types = ! empty( $args['allowed_types'] ) ? $args['allowed_types'] : false;
+			$title           = ! empty( $args['title'] ) ? $args['title'] : __( 'Meta fields', 'jet-engine' );
+			$button          = ! empty( $args['button'] ) ? $args['button'] : __( 'New Meta Field', 'jet-engine' );
+			$disabled        = ! empty( $args['disabled'] ) ? $args['disabled'] : array();
+			$allowed_types   = ! empty( $args['allowed_types'] ) ? $args['allowed_types'] : false;
+			$allowed_sources = Jet_Engine_Meta_Boxes_Option_Sources::instance()->get_allowed_sources_for_js();
 
 			wp_localize_script( 'jet-engine-meta-fields', 'JetEngineFieldsConfig', apply_filters( 'jet-engine/meta-fields/config', array(
 				'title'               => $title,
@@ -98,6 +101,7 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes_Page_Edit' ) ) {
 				'disabled'            => $disabled,
 				'quick_edit_supports' => array( 'text', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'checkbox', 'number' ),
 				'allowed_types'       => $allowed_types,
+				'allowed_sources'     => $allowed_sources,
 				'i18n'                => array(
 					'select_field'    => esc_html__( 'Select field...', 'jet-engine' ),
 					'select_operator' => esc_html__( 'Select operator...', 'jet_engine' )

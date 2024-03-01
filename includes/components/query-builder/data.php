@@ -102,6 +102,7 @@ class Data extends \Jet_Engine_Base_Data {
 
 		$bool_args = array(
 			'show_preview',
+			'cache_query',
 		);
 
 		foreach ( $bool_args as $key ) {
@@ -151,6 +152,11 @@ class Data extends \Jet_Engine_Base_Data {
 		$labels       = maybe_unserialize( $item['labels'] );
 		$args['name'] = $labels['name'];
 		$result       = array_merge( $item, $args );
+
+		// Set default value for `cache_query` setting if setting is not existing.
+		if ( ! isset( $result['cache_query'] ) ) {
+			$result['cache_query'] = true;
+		}
 
 		unset( $result['args'] );
 		unset( $result['labels'] );

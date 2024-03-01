@@ -43,6 +43,8 @@ class Factory {
 
 		add_action( 'rest_api_init', array( $this, 'register_endpoints' ) );
 
+		new Single_Item_Factory( $this );
+
 	}
 
 	public function init_pages() {
@@ -841,48 +843,6 @@ class Factory {
 	 */
 	public function get_date( $format, $time ) {
 		return apply_filters( 'jet-engine/custom-content-types/date', date( $format, $time ), $time, $format );
-	}
-
-	public function maybe_save_custom_check_radio_values( $fields ) {
-
-		$query_args = array_merge(
-			Module::instance()->manager->data->query_args,
-			array( 'id' => $this->type_id )
-		);
-
-		$item = Module::instance()->manager->data->db->query(
-			Module::instance()->manager->data->table,
-			$query_args
-		);
-
-		if ( empty( $item ) ) {
-			return;
-		}
-
-		$item        = $item[0];
-		$meta_fields = maybe_unserialize( $item['meta_fields'] );
-		$update      = false;
-
-		foreach ( $fields as $field => $field_args ) {
-
-			if ( ! isset( $_POST[ $field ] ) || '' === $_POST[ $field ] ) {
-				continue;
-			}
-
-			do_action( 'jet-engine/meta-boxes/save-custom-value', $field, $field_args );
-
-			$_meta_fields = jet_engine()->meta_boxes->maybe_add_custom_values_to_options( $meta_fields, $field, $field_args );
-
-			if ( $_meta_fields ) {
-				$meta_fields = $_meta_fields;
-				$update      = true;
-			}
-		}
-
-		if ( $update ) {
-			$item['meta_fields'] = maybe_serialize( $meta_fields );
-			Module::instance()->manager->data->update_item_in_db( $item );
-		}
 	}
 
 }

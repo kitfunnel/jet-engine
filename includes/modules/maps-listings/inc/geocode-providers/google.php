@@ -72,12 +72,12 @@ class Google extends Base {
 		}
 
 		return add_query_arg(
-			array(
+			apply_filters( 'jet-engine/maps-listings/autocomplete-url-args/google', array(
 				'input'    => urlencode( $query ),
 				'key'      => urlencode( $api_key ),
 				'language' => substr( get_bloginfo( 'language' ), 0, 2 ),
 				//'sessiontoken' => '', // todo - add sessiontoken to optimize request.
-			),
+			) ),
 			$api_url
 		);
 	}

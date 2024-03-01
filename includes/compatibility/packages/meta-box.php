@@ -375,7 +375,7 @@ if ( ! class_exists( 'Jet_Engine_Meta_Box_Package' ) ) {
 			if ( ! in_array( 'image', $whitelisted[ $type ] ) ) {
 				return false;
 			} else {
-				return $field['name'];
+				return $this->get_field_name( $field );
 			}
 
 		}
@@ -398,7 +398,7 @@ if ( ! class_exists( 'Jet_Engine_Meta_Box_Package' ) ) {
 			if ( ! in_array( 'link', $whitelisted[ $type ] ) ) {
 				return false;
 			} else {
-				return $field['name'];
+				return $this->get_field_name( $field );
 			}
 
 		}
@@ -421,9 +421,26 @@ if ( ! class_exists( 'Jet_Engine_Meta_Box_Package' ) ) {
 			if ( ! in_array( 'field', $whitelisted[ $type ] ) ) {
 				return false;
 			} else {
-				return $field['name'];
+				return $this->get_field_name( $field );
 			}
 
+		}
+
+		/**
+		 * Returns the field name.
+		 *
+		 * @param array $field Field arguments
+		 *
+		 * @return false|string
+		 */
+		public function get_field_name( $field = array() ) {
+			$name = ! empty( $field['name'] ) ? $field['name'] : false;
+
+			if ( ! $name ) {
+				$name = ! empty( $field['id'] ) ? $field['id'] : false;
+			}
+
+			return $name;
 		}
 
 		/**

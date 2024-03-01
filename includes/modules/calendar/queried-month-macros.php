@@ -28,8 +28,8 @@ class Jet_Engine_Queried_Month_Macros extends Jet_Engine_Base_Macros {
 	public function macros_callback( $args = array() ) {
 		
 		$range  = wp_cache_get( 'jet_engine_calendar_requested_dates' );
-		$return = ! empty( $args['return'] ) ? $args['return'] : 'start';
-		$format = ! empty( $args['format'] ) ? $args['format'] : 'timestamp';
+		$return = ! empty( $args['return_month'] ) ? $args['return_month'] : 'start';
+		$format = ! empty( $args['month_format'] ) ? $args['month_format'] : 'timestamp';
 
 		if ( empty( $range ) ) {
 			$range = $this->get_fallabck_range();
@@ -68,7 +68,7 @@ class Jet_Engine_Queried_Month_Macros extends Jet_Engine_Base_Macros {
 	 */
 	public function macros_args() {
 		return array(
-			'return' => array(
+			'return_month' => array(
 				'label'   => __( 'Return', 'jet-engine' ),
 				'type'    => 'select',
 				'options' => array(
@@ -77,7 +77,7 @@ class Jet_Engine_Queried_Month_Macros extends Jet_Engine_Base_Macros {
 				),
 				'default' => 'start',
 			),
-			'format' => array(
+			'month_format' => array(
 				'label'   => __( 'Date format', 'jet-engine' ),
 				'type'    => 'select',
 				'options' => array(

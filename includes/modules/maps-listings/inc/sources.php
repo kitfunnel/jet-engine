@@ -22,11 +22,13 @@ class Sources {
 		require_once $path . 'terms.php';
 		require_once $path . 'users.php';
 		require_once $path . 'repeater.php';
+		require_once $path . 'sql.php';
 
 		$this->register_source( new Source\Posts() );
 		$this->register_source( new Source\Terms() );
 		$this->register_source( new Source\Users() );
 		$this->register_source( new Source\Repeater() );
+		$this->register_source( new Source\SQL() );
 
 		do_action( 'jet-engine/maps-listing/sources/register', $this );
 	}

@@ -622,7 +622,7 @@ function jet_related_items_list( $items = array(), $tag = 'ul', $is_single = fal
 
 	$relation = jet_engine()->relations->get_active_relations( $rel_id );
 
-	if ( ! $relation ) {
+	if ( ! $relation || ! is_object( $relation ) ) {
 		return;
 	}
 
@@ -987,6 +987,7 @@ function jet_engine_render_field_values_count( $values = array() ) {
  * @return mixed
  */
 function jet_engine_custom_cb_render_select( $post_id = 0, $field = '', $delimeter = ', ' ) {
+
 	$value = get_post_meta( $post_id, $field, true );
 
 	if ( ! $value ) {
@@ -1010,7 +1011,6 @@ function jet_engine_get_field_options_labels( $value = null, $obj_type = 'post',
 
 	$all_fields  = jet_engine()->meta_boxes->get_registered_fields();
 	$found_field = null;
-	$result      = array();
 
 	if ( ! isset( $all_fields[ $obj_type ] ) ) {
 		return is_array( $value ) ? wp_kses_post( implode( $delimiter, $value ) ) : wp_kses_post( $value );
@@ -1022,24 +1022,29 @@ function jet_engine_get_field_options_labels( $value = null, $obj_type = 'post',
 		}
 	}
 
-	if ( ! $found_field || ( empty( $found_field['options'] ) && empty( $found_field['options_from_glossary'] ) ) ) {
+	$post_meta        = new \Jet_Engine_CPT_Meta();
+	$prepared_options = $post_meta->filter_options_list( [], $found_field );
+
+	if ( empty( $prepared_options ) ) {
 		return is_array( $value ) ? wp_kses_post( implode( $delimiter, $value ) ) : wp_kses_post( $value );
 	}
 
-	if ( ! empty( $found_field['options_from_glossary'] ) ) {
+	$value  = is_array( $value ) ? $value : array( $value );
+	$result = [];
 
-		if ( ! empty( $found_field['glossary_id'] ) ) {
-			return jet_engine_label_by_glossary( $value, $found_field['glossary_id'], $delimiter );
-		}
-
-		return is_array( $value ) ? wp_kses_post( implode( $delimiter, $value ) ) : wp_kses_post( $value );
+	if ( is_array( $prepared_options ) ) {
+		$all_values = array_column( $prepared_options, 'key' );
+		$all_labels = array_column( $prepared_options, 'value' );
+		$prepared_options = array_combine( $all_values, $all_labels );
+	} elseif ( is_callable( $prepared_options ) ) {
+		$prepared_options = call_user_func( $prepared_options );
 	}
 
-	foreach ( $found_field['options'] as $option ) {
-		if ( is_array( $value ) && in_array( $option['key'], $value ) ) {
-			$result[] = $option['value'];
-		} elseif ( $value === $option['key'] )  {
-			$result[] = $option['value'];
+	foreach ( $value as $single_value ) {
+		if ( isset( $prepared_options[ $single_value ] ) ) {
+			$result[] = is_array( $prepared_options[ $single_value ] ) 
+						? $prepared_options[ $single_value ]['label']
+						: $prepared_options[ $single_value ];
 		}
 	}
 

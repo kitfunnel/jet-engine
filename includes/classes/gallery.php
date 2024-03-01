@@ -200,7 +200,7 @@ if ( ! class_exists( 'Jet_Engine_Img_Gallery' ) ) {
 
 					$lightbox_attr = array(
 						'href'  => $img_full,
-						'class' => array( 'jet-engine-gallery-grid__item-wrap', 'jet-engine-gallery-item-wrap' ),
+						'class' => array( 'jet-engine-gallery-grid__item-wrap', 'jet-engine-gallery-item-wrap', 'is-lightbox' ),
 					);
 
 					$lightbox_attr = apply_filters( 'jet-engine/gallery/lightbox-attr', $lightbox_attr, $img_data, $gallery_id );

@@ -165,6 +165,12 @@ class Maps_Listing_Blocks_Views_Type extends \Jet_Engine_Blocks_Views_Type_Base 
 				'type'    => 'boolean',
 				'default' => true,
 			),
+			'cluster_max_zoom' => array(
+				'type' => 'number',
+			),
+			'cluster_radius' => array(
+				'type' => 'number',
+			),
 
 			// Popup
 			'popup_width' => array(

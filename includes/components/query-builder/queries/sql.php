@@ -502,6 +502,11 @@ class SQL_Query extends Base_Query {
 				$current_query .= " ";
 
 				foreach ( $this->final_query['orderby'] as $row ) {
+
+					if ( empty( $row['orderby'] ) ) {
+						continue;
+					}
+
 					$row['column'] = $row['orderby'];
 					$orderby[] = $row;
 				}
@@ -575,18 +580,25 @@ class SQL_Query extends Base_Query {
 	 */
 	public function add_order_args( $args = array() ) {
 
-		$query = "ORDER BY ";
-		$glue  = ' ';
+		$query = '';
+		$glue  = '';
 
 		foreach ( $args as $arg ) {
 
-			$column = $arg['column'];
-			$type   = $arg['type'];
-			$order  = $arg['order'];
+			// Sanitize SQL `column name` string to prevent SQL injection.
+			// See: https://github.com/Crocoblock/issues-tracker/issues/5251
+			$column = \Jet_Engine_Tools::sanitize_sql_orderby( $arg['column'] );
+			$type   = ! empty( $arg['type'] ) ? $arg['type'] : 'CHAR';
+			$order  = ! empty( $arg['order'] ) ? strtoupper( $arg['order'] ) : 'DESC';
+			$order  = in_array( $order, array( 'ASC', 'DESC' ) ) ? $order : 'DESC';
+
+			if ( ! $column ) {
+				continue;
+			}
 
 			$query .= $glue;
 
-			switch ( $arg['type'] ) {
+			switch ( $type ) {
 				case 'NUMERIC':
 				case 'DECIMAL':
 					$query .= "CAST( $column as DECIMAL )";
@@ -605,6 +617,10 @@ class SQL_Query extends Base_Query {
 			$query .= $order;
 
 			$glue = ", ";
+		}
+
+		if ( $query ) {
+			$query  = "ORDER BY " . $query;
 		}
 
 		return $query;

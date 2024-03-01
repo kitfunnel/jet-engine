@@ -6,6 +6,7 @@ class Request {
 	private $endpoint;
 	private $url;
 	private $error;
+	private $error_details;
 
 	public $is_sample_request = false;
 
@@ -33,6 +34,14 @@ class Request {
 
 	public function set_error( $error ) {
 		$this->error = $error;
+	}
+
+	public function get_error_details() {
+		return $this->error_details;
+	}
+
+	public function set_error_details( $error_details ) {
+		$this->error_details = $error_details;
 	}
 
 	public function send_request( $query_args = array(), $type = 'get' ) {
@@ -90,10 +99,13 @@ class Request {
 
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			$this->set_error( wp_remote_retrieve_response_message( $response ) );
+			$this->set_error_details( $response );
 			return false;
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ) );
+
+		$body = apply_filters( 'jet-engine/rest-api-listings/response/body', $body, $this, $query_args, $response );
 
 		if ( empty( $body ) ) {
 			$this->set_error( __( 'Reponse body is empty', 'jet-engine' ) );

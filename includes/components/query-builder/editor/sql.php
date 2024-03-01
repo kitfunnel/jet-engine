@@ -42,6 +42,11 @@ class SQL_Query extends Base_Query {
 		$prefix = $wpdb->prefix;
 		$dbname = $wpdb->dbname;
 
+		// HyperDB workaround
+		if ( empty( $dbName ) && defined( 'DB_NAME' ) ) {
+			$dbname = DB_NAME;
+		}
+
 		$all_tables = $wpdb->get_results( "SHOW TABLES LIKE '$prefix%'", ARRAY_N );
 		$all_tables = array_map( function( $item ) use ( $prefix ) {
 			return preg_replace( '/' . $prefix . '/', '', $item, 1 );

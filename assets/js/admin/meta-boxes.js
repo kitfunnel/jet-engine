@@ -2,7 +2,7 @@
 
 	'use strict';
 
-	var JetEngineMetaBoxes = {
+	window.JetEngineMetaBoxes = {
 
 		init: function() {
 
@@ -217,6 +217,6 @@
 
 	};
 
-	JetEngineMetaBoxes.init();
+	window.JetEngineMetaBoxes.init();
 
 })( jQuery );

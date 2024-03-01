@@ -60,12 +60,21 @@ if ( ! class_exists( 'Jet_Engine_Blocks_Views_Render' ) ) {
 		}
 
 		/**
-		 * Print preview CSS
+		 * Print preview CSS for listing
 		 *
-		 * @return [type] [description]
+		 * @param  object $render Render instance
+		 * @return void
 		 */
-		public function print_preview_css() {
-			$this->print_css();
+		public function print_preview_css( $render ) {
+			// $this->print_css();
+
+			// Print CSS only for current listing.
+			$listing_id = $render->listing_id;
+
+			if ( ! empty( $this->enqueued_css[ $listing_id ] ) && ! in_array( $listing_id, $this->printed_css ) ) {
+				echo $this->enqueued_css[ $listing_id ];
+				$this->printed_css[] = $listing_id;
+			}
 		}
 
 		public function print_css() {
@@ -224,8 +233,6 @@ if ( ! class_exists( 'Jet_Engine_Blocks_Views_Render' ) ) {
 			}
 
 		}
-
-
 
 		/**
 		 * Returns raw listing content

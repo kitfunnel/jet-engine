@@ -73,8 +73,12 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes' ) ) {
 			add_action( 'jet-engine/pages/cpt/register', array( $this, 'add_meta_fields_to_rel_components' ) );
 			add_action( 'jet-engine/pages/taxonomies/register', array( $this, 'add_meta_fields_to_rel_components' ) );
 
-			require $this->component_path( 'data.php' );
+			add_action( 'init', function() {
+				require $this->component_path( 'fields-options/option-sources.php' );
+				Jet_Engine_Meta_Boxes_Option_Sources::instance();
+			}, 1 );
 
+			require $this->component_path( 'data.php' );
 			$this->data = new Jet_Engine_Meta_Boxes_Data( $this );
 
 			add_action( 'jet-engine/post-types/deleted-post-type',      array( $this, 'remove_deleted_post_type_from_meta_boxes' ) );
@@ -243,7 +247,14 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes' ) ) {
 							}
 
 							$this->store_fields( $post_type, $meta_fields, 'post_type' );
-							$this->find_meta_fields_with_save_custom( $object_type, $post_type, $meta_box['id'], $meta_fields );
+							
+							Jet_Engine_Meta_Boxes_Option_Sources::instance()->find_meta_fields_with_save_custom( 
+								$object_type, 
+								$post_type,
+								$meta_fields,
+								$meta_box['id'],
+								$this->data
+							);
 
 							$meta_instance = new Jet_Engine_CPT_Meta( $post_type, $meta_fields, $title, 'normal', 'high', $args );
 
@@ -291,7 +302,14 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes' ) ) {
 							}
 
 							$this->store_fields( $taxonomy, $meta_fields, 'taxonomy' );
-							$this->find_meta_fields_with_save_custom( $object_type, $taxonomy, $meta_box['id'], $meta_fields );
+							
+							Jet_Engine_Meta_Boxes_Option_Sources::instance()->find_meta_fields_with_save_custom(
+								$object_type,
+								$taxonomy,
+								$meta_fields,
+								$meta_box['id'],
+								$this->data
+							);
 						}
 
 						break;
@@ -318,7 +336,14 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes' ) ) {
 						$object_name = $args['name'] . ' ' . __( '(User fields)', 'jet-engine' );
 
 						$this->store_fields( $object_name, $meta_fields, 'user' );
-						$this->find_meta_fields_with_save_custom( $object_type, 'user', $meta_box['id'], $meta_fields );
+
+						Jet_Engine_Meta_Boxes_Option_Sources::instance()->find_meta_fields_with_save_custom(
+							$object_type,
+							'user',
+							$meta_fields,
+							$meta_box['id'],
+							$this->data
+						);
 
 						foreach ( $meta_fields as $field ) {
 
@@ -346,8 +371,6 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes' ) ) {
 			}
 
 			$this->store_default_user_meta_fields();
-
-			$this->add_hooks_to_save_custom_values();
 
 		}
 
@@ -426,245 +449,6 @@ if ( ! class_exists( 'Jet_Engine_Meta_Boxes' ) ) {
 		 */
 		public function get_registered_fields() {
 			return $this->meta_fields;
-		}
-
-		/**
-		 * Find meta fields with enabling `save custom` option
-		 *
-		 * @param $object_type
-		 * @param $sub_type
-		 * @param $meta_box_id
-		 * @param $fields
-		 */
-		public function find_meta_fields_with_save_custom( $object_type, $sub_type, $meta_box_id, $fields  ) {
-			foreach ( $fields as $field ) {
-
-				if ( empty( $field['object_type'] ) ) {
-					continue;
-				}
-
-				if ( 'field' !== $field['object_type'] || ! in_array( $field['type'], array( 'checkbox', 'radio' ) ) ) {
-					continue;
-				}
-
-				$allow_custom = ! empty( $field['allow_custom'] ) && filter_var( $field['allow_custom'], FILTER_VALIDATE_BOOLEAN );
-				$save_custom  = ! empty( $field['save_custom'] ) && filter_var( $field['save_custom'], FILTER_VALIDATE_BOOLEAN );
-
-				if ( ! $allow_custom || ! $save_custom ) {
-					continue;
-				}
-
-				if ( empty( $this->meta_fields_save_custom[ $object_type ] ) ) {
-					$this->meta_fields_save_custom[ $object_type ] = array();
-				}
-
-				$field_args = array_merge( array( 'meta_box_id' => $meta_box_id ), $field );
-
-				if ( empty( $this->meta_fields_save_custom[ $object_type ][ $sub_type ] ) ) {
-					$this->meta_fields_save_custom[ $object_type ][ $sub_type ] = array();
-				}
-
-				$this->meta_fields_save_custom[ $object_type ][ $sub_type ][ $field['name'] ] = $field_args;
-			}
-		}
-
-		/**
-		 * Add hooks to save custom values
-		 */
-		public function add_hooks_to_save_custom_values() {
-
-			if ( empty( $this->meta_fields_save_custom ) ) {
-				return;
-			}
-
-			foreach ( $this->meta_fields_save_custom as $object_type => $sub_types ) {
-
-				switch ( $object_type ) {
-					case 'post':
-						foreach ( $sub_types as $post_type => $fields ) {
-							add_action( "save_post_{$post_type}", array( $this, 'save_custom_values' ) );
-						}
-
-						break;
-
-					case 'tax':
-					case 'taxonomy':
-						foreach ( $sub_types as $tax => $fields ) {
-							add_action( "created_{$tax}", array( $this, 'save_custom_values' ) );
-							add_action( "edited_{$tax}",  array( $this, 'save_custom_values' ) );
-						}
-						break;
-
-					case 'user':
-						add_action( 'edit_user_profile_update', array( $this, 'save_custom_values' ) );
-						add_action( 'personal_options_update',  array( $this, 'save_custom_values' ) );
-						break;
-				}
-			}
-		}
-
-		/**
-		 * Save custom values
-		 *
-		 * @param $id Object ID
-		 */
-		public function save_custom_values( $id ) {
-
-			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-				return;
-			}
-
-			if ( empty( $_POST ) ) {
-				return;
-			}
-
-			$action = current_action();
-
-			if ( false !== strpos( $action, 'save_post_'  ) ) {
-				$action = 'save_post';
-			} elseif ( false !== strpos( $action, 'created_'  ) ) {
-				$action = 'created_term';
-			} elseif ( false !== strpos( $action, 'edited_'  ) ) {
-				$action = 'edited_term';
-			}
-
-			if ( 'created_term' === $action ) {
-				if ( ! isset( $_POST['_wpnonce_add-tag'] ) ) {
-					return;
-				}
-			} else {
-				if ( ! isset( $_POST['_wpnonce'] ) && ! isset( $_POST['_inline_edit'] ) ) {
-					return;
-				}
-			}
-
-			switch ( $action ) {
-				case 'save_post':
-					$object_type = 'post';
-					$sub_type    = $_POST['post_type'];
-
-					if ( ! current_user_can( 'edit_post', $id ) ) {
-						return;
-					}
-					break;
-
-				case 'created_term':
-				case 'edited_term':
-					$object_type = 'taxonomy';
-					$sub_type    = $_POST['taxonomy'];
-
-					if ( ! current_user_can( 'edit_term', $id ) ) {
-						return;
-					}
-					break;
-
-				case 'edit_user_profile_update':
-				case 'personal_options_update':
-					$object_type = $sub_type = 'user';
-
-					if ( ! current_user_can( 'edit_user', $id ) ) {
-						return;
-					}
-					break;
-
-				default:
-					$object_type = $sub_type = false;
-			}
-
-			if ( ! $object_type || ! $sub_type ) {
-				return;
-			}
-
-			$raw    = $this->data->get_raw();
-			$update = false;
-
-			foreach ( $this->meta_fields_save_custom[ $object_type ][ $sub_type ] as $field => $field_args ) {
-
-				if ( ! isset( $_POST[ $field ] ) || '' === $_POST[ $field ] ) {
-					continue;
-				}
-
-				do_action( 'jet-engine/meta-boxes/save-custom-value', $field, $field_args );
-
-				$meta_box_item = $raw[ $field_args['meta_box_id'] ];
-				$meta_fields   = $meta_box_item['meta_fields'];
-				$_meta_fields  = $this->maybe_add_custom_values_to_options( $meta_fields, $field, $field_args );
-
-				if ( $_meta_fields ) {
-					$raw[ $field_args['meta_box_id'] ]['meta_fields'] = $_meta_fields;
-					$update = true;
-				}
-			}
-
-			if ( $update ) {
-				update_option( $this->data->option_name, $raw );
-			}
-		}
-
-		/**
-		 * Maybe add custom values to options.
-		 *
-		 * @param $meta_fields
-		 * @param $field
-		 * @param $field_args
-		 *
-		 * @return mixed
-		 */
-		public function maybe_add_custom_values_to_options( $meta_fields, $field, $field_args ) {
-			$update_meta   = false;
-			$meta_index    = array_search( $field, array_column( $meta_fields, 'name' ) );
-			$meta_options  = ! empty( $meta_fields[ $meta_index ]['options'] ) ?
-				array_column( $meta_fields[ $meta_index ]['options'], 'key' )
-				: array();
-
-			if ( ! isset( $meta_fields[ $meta_index ]['options'] ) ) {
-				$meta_fields[ $meta_index ]['options'] = array();
-			}
-
-			switch ( $field_args['type'] ) {
-				case 'checkbox':
-
-					$custom_values = array_diff( array_keys( $_POST[ $field ] ), $meta_options );
-
-					if ( ! empty( $custom_values ) ) {
-						foreach ( $custom_values as $custom_value ) {
-
-							$custom_item_value = filter_var( $_POST[ $field ][ $custom_value ], FILTER_VALIDATE_BOOLEAN );
-
-							if ( $custom_item_value ) {
-								$meta_fields[ $meta_index ]['options'][] = array(
-									'key'        => esc_attr( $custom_value ),
-									'value'      => esc_attr( $custom_value ),
-									'is_checked' => '',
-								);
-
-								$update_meta = true;
-							}
-						}
-					}
-					break;
-
-				case 'radio':
-					$custom_value = ! in_array( $_POST[ $field ], $meta_options ) ? $_POST[ $field ] : false;
-
-					if ( ! Jet_Engine_Tools::is_empty( $custom_value ) ) {
-						$meta_fields[ $meta_index ]['options'][] = array(
-							'key'        => esc_attr( $custom_value ),
-							'value'      => esc_attr( $custom_value ),
-							'is_checked' => '',
-						);
-
-						$update_meta = true;
-					}
-
-					break;
-			}
-
-			if ( ! $update_meta ) {
-				return false;
-			}
-
-			return $meta_fields;
 		}
 
 		/**

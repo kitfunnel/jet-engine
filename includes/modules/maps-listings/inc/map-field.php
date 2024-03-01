@@ -6,6 +6,7 @@ class Map_Field {
 	public $field_type = 'map';
 
 	public $assets_added = false;
+	public $cct_map_cols = array();
 
 	/**
 	 * Constructor for the class
@@ -28,7 +29,8 @@ class Map_Field {
 		add_action( 'jet-engine/meta-boxes/templates/fields/controls',          array( $this, 'add_controls' ) );
 		add_action( 'jet-engine/meta-boxes/templates/fields/repeater/controls', array( $this, 'add_repeater_controls' ) );
 
-		add_filter( 'jet-engine/custom-content-types/item-to-update', array( $this, 'ensure_cct_data_on_save' ), 10, 2 );
+		add_filter( 'jet-engine/custom-content-types/item-to-update',    array( $this, 'ensure_cct_data_on_save' ), 10, 2 );
+		add_filter( 'jet-engine/custom-content-types/db/exclude-fields', array( $this, 'exclude_cct_map_fields' ) );
 
 	}
 
@@ -232,6 +234,10 @@ class Map_Field {
 					$lat_col  = $field_prefix . '_lat';
 					$lng_col  = $field_prefix . '_lng';
 
+					$this->cct_map_cols[] = $hash_col;
+					$this->cct_map_cols[] = $lat_col;
+					$this->cct_map_cols[] = $lng_col;
+
 					if ( ! $instance->db->column_exists( $hash_col ) ) {
 						$instance->db->insert_table_columns( array( $hash_col => 'text' ) );
 					}
@@ -341,6 +347,11 @@ class Map_Field {
 					'lng' => array( 'type' => array( 'string', 'float' ) ),
 				),
 				'prepare_callback' => function( $value, $request, $args ) {
+
+					if ( empty( $value ) ) {
+						return new \stdClass();
+					}
+
 					return json_decode( $value );
 				}
 			);
@@ -478,6 +489,15 @@ class Map_Field {
 			]"
 		></cx-vui-input>
 		<?php
+	}
+
+	public function exclude_cct_map_fields( $exclude ) {
+
+		if ( empty( $this->cct_map_cols ) ) {
+			return $exclude;
+		}
+
+		return array_merge( $exclude, array_unique( $this->cct_map_cols ) );
 	}
 
 }

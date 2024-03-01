@@ -1,6 +1,8 @@
 <?php
 namespace Jet_Engine\Glossaries;
 
+use Jet_Engine\Meta_Boxes\Option_Sources\Manual_Bulk_Options;
+
 /**
  * Meta fields compatibility class
  */
@@ -10,28 +12,51 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-class Meta_Fields {
+class Meta_Fields extends Manual_Bulk_Options {
 
-	public function __construct() {
-		add_filter( 'jet-engine/meta-fields/config', array( $this, 'add_glossaries_to_fields_config' ) );
-		add_filter( 'jet-engine/meta-fields/field-options', array( $this, 'apply_glossary' ), 10, 2 );
+	public $source_name = 'glossary';
 
-		add_action( 'jet-engine/meta-boxes/save-custom-value', array( $this, 'add_custom_values_to_glossary' ), 10, 2 );
+	/**
+	 * Custom part of init
+	 * 
+	 * @return [type] [description]
+	 */
+	public function init() {
+		add_filter( 'jet-engine/meta-fields/config', [ $this, 'add_data_to_config' ] );
+		add_action( 'jet-engine/meta-boxes/save-custom-value', [ $this, 'add_custom_values_to_glossary' ], 10, 2 );
 	}
 
-	public function is_glossary_field( $field = array() ) {
+	public function add_data_to_config( $config ) {
 
-		if ( empty( $field['options_from_glossary'] ) || empty( $field['glossary_id'] ) ) {
+		$items = array_merge(
+			[ [ 'id' => '', 'name' => __( 'Select glossary', 'jet-engine' ) ] ],
+			jet_engine()->glossaries->settings->get()
+		);
+
+		$config['glossaries'] = \Jet_Engine_Tools::prepare_list_for_js( $items, 'id', 'name' );
+		$config['api_path_search_glossary_fields'] = jet_engine()->api->get_route( 'search-glossary-fields' );
+
+		return $config;
+
+	}
+
+	public function is_field_of_current_source( $field = array() ) {
+
+		if ( isset( $field['options_source'] ) && $this->source_name === $field['options_source'] ) {
+			return true;
+		} elseif ( isset( $field['options_source'] ) && $this->source_name !== $field['options_source'] ) {
 			return false;
+		} elseif ( empty( $field['options_from_glossary'] ) || empty( $field['glossary_id'] ) ) {
+			return false;
+		} else {
+			return true;
 		}
-
-		return true;
 
 	}
 
 	public function add_custom_values_to_glossary( $field = null, $field_data = array() ) {
 
-		if ( empty( $field_data['options_from_glossary'] ) || empty( $field_data['glossary_id'] ) ) {
+		if ( ! $this->is_field_of_current_source( $field_data ) ) {
 			return;
 		}
 
@@ -93,20 +118,6 @@ class Meta_Fields {
 
 	}
 
-	public function add_glossaries_to_fields_config( $config ) {
-
-		$items = array_merge(
-			array( array( 'id' => '', 'name' => __( 'Select glossary', 'jet-engine' ) ) ),
-			jet_engine()->glossaries->settings->get()
-		);
-
-		$config['glossaries'] = \Jet_Engine_Tools::prepare_list_for_js( $items, 'id', 'name' );
-		$config['api_path_search_glossary_fields'] = jet_engine()->api->get_route( 'search-glossary-fields' );
-
-		return $config;
-
-	}
-
 	public function format_list( $list = array() ) {
 
 		$result = array();
@@ -122,14 +133,12 @@ class Meta_Fields {
 		return $result;
 	}
 
-	public function apply_glossary( $options = array(), $field = array() ) {
-
-		if ( ! $this->is_glossary_field( $field ) ) {
-			return $options;
+	public function parse_options( $field = array() ) {
+		if ( empty( $field['glossary_id'] ) ) {
+			return [];
+		} else {
+			return $this->format_list( $this->get_glossary_for_field( $field['glossary_id'] ) );
 		}
-
-		return $this->format_list( $this->get_glossary_for_field( $field['glossary_id'] ) );
-
 	}
 
 }

@@ -106,6 +106,7 @@ class Manager {
 			$this->component_path( 'elements/dynamic-field.php' ),
 			$this->component_path( 'elements/dynamic-image.php' ),
 			$this->component_path( 'elements/dynamic-link.php' ),
+			$this->component_path( 'elements/dynamic-terms.php' ),
 		);
 
 		foreach ( $element_files as $file ) {

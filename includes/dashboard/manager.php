@@ -207,11 +207,18 @@ if ( ! class_exists( 'Jet_Engine_Dashboard' ) ) {
 		 * Returns dashboard page URL
 		 * @return [type] [description]
 		 */
-		public function dashboard_url() {
-			return add_query_arg(
+		public function dashboard_url( $tab = '' ) {
+			
+			$url = add_query_arg(
 				array( 'page' => jet_engine()->admin_page ),
 				esc_url( admin_url( 'admin.php' ) )
 			);
+
+			if ( $tab ) {
+				$url .= '#' . esc_attr( $tab );
+			}
+
+			return $url;
 		}
 
 		/**

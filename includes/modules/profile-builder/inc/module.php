@@ -46,8 +46,10 @@ class Module {
 		require $this->module_path( 'rewrite.php' );
 		require $this->module_path( 'query.php' );
 		require $this->module_path( 'frontend.php' );
+		require $this->module_path( 'base-integration.php' );
 		require $this->module_path( 'elementor-integration.php' );
 		require $this->module_path( 'blocks-integration.php' );
+		require $this->module_path( 'twig-integration.php' );
 		require $this->module_path( 'compatibility.php' );
 
 		// Bricks Integration
@@ -60,6 +62,7 @@ class Module {
 		$this->elementor = new Elementor_Integration();
 
 		new Blocks_Integration();
+		new Twig_Integration();
 		new Compatibility();
 		new Bricks_Views\Manager();
 

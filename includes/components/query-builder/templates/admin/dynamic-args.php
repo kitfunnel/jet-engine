@@ -83,8 +83,14 @@
 			><span slot="label"><?php _e( 'Apply', 'jet-engine' ); ?></span></cx-vui-button>
 		</div>
 		<div class="jet-query-macros__content" v-else-if="! editMacros && ! editSettings">
+			<input
+				class="jet-query-macros__search cx-vui-input size-fullwidth"
+				type="search"
+				:placeholder="'<?php _e( 'Enter keyword search', 'jet-engine' ); ?>'"
+				v-model="searchKeyword"
+			>
 			<div class="jet-query-macros__list">
-				<div class="jet-query-macros-item" v-for="macros in macrosList">
+				<div class="jet-query-macros-item" v-for="macros in filteredMacrosList" :key="macros.id">
 					<div class="jet-query-macros-item__name" @click="applyMacros( macros )">
 						<span class="jet-query-macros-item__mark">≫</span>
 						{{ macros.name }}

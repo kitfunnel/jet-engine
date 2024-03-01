@@ -110,7 +110,7 @@ class Jet_Engine_Listings_Callbacks {
 	}
 
 	/**
-	 * Apply callbacks args for givan callback
+	 * Apply callbacks args for given callback
 	 * 
 	 * @return [type] [description]
 	 */
@@ -561,7 +561,7 @@ class Jet_Engine_Listings_Callbacks {
 			case 'jet_related_posts_list':
 			case 'jet_related_items_list':
 
-				$tag       = isset( $settings['related_list_tag'] ) ? $settings['related_list_tag'] : '';
+				$tag       = isset( $settings['related_list_tag'] ) ? $settings['related_list_tag'] : 'ul';
 				$tag       = Jet_Engine_Tools::sanitize_html_tag( $tag );
 				$is_linked = isset( $settings['related_list_is_linked'] ) ? $settings['related_list_is_linked'] : '';
 				$is_single = isset( $settings['related_list_is_single'] ) ? $settings['related_list_is_single'] : '';
@@ -576,6 +576,8 @@ class Jet_Engine_Listings_Callbacks {
 						$args[] = $settings['dynamic_field_post_object'];
 					} elseif ( ! empty( $settings['object_field'] ) ) {
 						$args[] = $settings['object_field'];
+					} elseif ( ! empty( $settings['related_items_prop'] ) ) {
+						$args[] = $settings['related_items_prop'];
 					}
 
 				}

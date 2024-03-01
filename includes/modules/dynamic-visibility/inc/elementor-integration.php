@@ -17,8 +17,6 @@ class Elementor_Integration extends Condition_Checker {
 
 	private $resize_columns_ids = array();
 
-	private $dynamic_printed_css = array();
-
 	public function __construct() {
 
 		if ( ! jet_engine()->has_elementor() ) {
@@ -71,8 +69,6 @@ class Elementor_Integration extends Condition_Checker {
 			add_filter( 'elementor/element/get_child_type', '__return_false' ); // for prevent getting content of inner elements.
 			add_filter( 'elementor/frontend/' . $element->get_type() . '/should_render', '__return_false' );
 
-			$this->dynamic_printed_css = jet_engine()->dynamic_tags->get_printed_css();
-
 			if ( 'widget' === $element->get_type() ) {
 
 				$is_inline_css_mode = \Elementor\Plugin::$instance->experiments->is_feature_active( 'e_optimized_css_loading' );
@@ -99,9 +95,6 @@ class Elementor_Integration extends Condition_Checker {
 
 		remove_filter( 'elementor/element/get_child_type', '__return_false' );
 		remove_filter( 'elementor/frontend/' . $element->get_type() . '/should_render', '__return_false' );
-
-		// Set initial the Jet_Engine_Dynamic_Tags_Manager::$printed_css property if element is hidden.
-		jet_engine()->dynamic_tags->set_printed_css( $this->dynamic_printed_css );
 
 		if ( 'widget' === $element->get_type() && $this->need_unregistered_inline_css_widget ) {
 

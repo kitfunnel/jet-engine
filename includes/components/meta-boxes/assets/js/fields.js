@@ -153,6 +153,8 @@ Vue.component( 'jet-meta-field', {
 		return {
 			field: {},
 			glossariesList: JetEngineFieldsConfig.glossaries,
+			queriesList: JetEngineFieldsConfig.queries,
+			allowedSources: JetEngineFieldsConfig.allowed_sources,
 			postTypes: JetEngineFieldsConfig.post_types,
 			i18n: JetEngineFieldsConfig.i18n,
 			quickEditSupports: JetEngineFieldsConfig.quick_edit_supports,
@@ -160,12 +162,35 @@ Vue.component( 'jet-meta-field', {
 	},
 	created() {
 		this.field = { ...this.value };
+
+		// Ensure options_source migrated correctly
+		if ( ! this.field.options_source ) {
+			if ( this.field.options_from_glossary ) {
+				this.field.options_source = 'glossary';
+			} else {
+				this.field.options_source = 'manual';
+			}
+		}
+
+		// Ensure options_source migrated correctly for repeater fields
+		if ( 'repeater' === this.field.type ) {
+			for ( var i = 0; i < this.field['repeater-fields'].length; i++ ) {
+				if ( ! this.field['repeater-fields'][ i ].options_source ) {
+					if ( this.field['repeater-fields'][ i ].options_from_glossary ) {
+						this.field['repeater-fields'][ i ].options_source = 'glossary';
+					} else {
+						this.field['repeater-fields'][ i ].options_source = 'manual';
+					}
+				}
+			}
+		}
+
 	},
 	computed: {
 		repeaterFieldTypes: function() {
 			var skipTypes = [ 'repeater', 'html' ];
 			return this.fieldTypes.filter( function( field ) {
-				return ! skipTypes.includes( field.value );
+				return ! skipTypes.includes( field.value ) && ! field.skip_repeater;
 			} );
 		},
 	},
@@ -303,6 +328,7 @@ Vue.component( 'jet-meta-field', {
 				title: '',
 				name: '',
 				type: 'text',
+				options_source: 'manual',
 				collapsed: false,
 				id: this.getRandomID(),
 			};

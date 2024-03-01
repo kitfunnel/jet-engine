@@ -39,6 +39,8 @@ class Query {
 
 		add_action( 'jet-engine/query-builder/query/after-query-setup', array( $this, 'maybe_setup_load_more_prop' ) );
 
+		add_filter( 'jet-engine/listing/grid/nav-widget-settings', array( $this, 'update_listing_nav_post_num' ), 10, 3 );
+
 	}
 
 	public function query_items( $items, $settings, $widget ) {
@@ -170,6 +172,23 @@ class Query {
 		}
 
 		return $request;
+	}
+
+	public function update_listing_nav_post_num( $result, $settings, $render ) {
+
+		if ( empty( $render->listing_query_id ) ) {
+			return $result;
+		}
+
+		$query = Query_Manager::instance()->get_query_by_id( $render->listing_query_id );
+
+		if ( ! $query ) {
+			return $result;
+		}
+
+		$result['posts_num'] = $query->get_items_per_page();
+
+		return $result;
 	}
 
 }

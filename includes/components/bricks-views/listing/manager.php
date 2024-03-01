@@ -42,9 +42,11 @@ class Manager {
 		add_action( 'jet-engine/listing/grid/before-render', [ $this, 'set_global_post_for_listing' ] );
 
 		add_filter( 'bricks/link_css_selectors', [ $this, 'link_css_selectors' ], 10, 1 );
-		add_filter( 'bricks/element/render', [ $this, 'set_post_id' ], 10, 2 );
 		add_action( 'jet-engine/listing-element/before-render', [ $this, 'set_current_object_in_bricks_loop' ] );
 		add_action( 'bricks/query/after_loop', [ $this, 'reset_current_object_in_bricks_loop' ] );
+
+		add_action( 'jet-engine/listing/grid/before', [ $this, 'actions_before_grid_items' ], 10 );
+		add_action( 'jet-engine/listing/grid/after', [ $this, 'actions_after_grid_items' ], 10 );
 
 		require_once jet_engine()->bricks_views->component_path( 'listing/render.php' );
 		$this->render = new Render();
@@ -194,17 +196,17 @@ class Manager {
 		return $selectors;
 	}
 
+	public function actions_before_grid_items() {
+		add_filter( 'bricks/builder/data_post_id', [ $this, 'set_post_id' ], 10 );
+	}
+
+	public function actions_after_grid_items() {
+		remove_filter( 'bricks/builder/data_post_id', [ $this, 'set_post_id' ] );
+	}
+
 	// Integration of bricks condition into the listing grid widget
-	public function set_post_id( $render_element, $element_instance ) {
-
-		$element_instance->set_post_id( jet_engine()->listings->data->get_current_object_id() );
-
-		// Check element conditions (@since 1.5.4)
-		if ( ! empty( $element_instance->settings['_conditions'] ) ) {
-			$render_element = Conditions::check( $element_instance->settings['_conditions'], $element_instance );
-		}
-
-		return $render_element;
+	public function set_post_id( $post_id ) {
+		return jet_engine()->listings->data->get_current_object_id();
 	}
 
 	// Set current User or Term object to dynamic widgets in a bricks loop

@@ -270,6 +270,10 @@ if ( ! class_exists( 'Jet_Engine_Modules_Updater' ) ) {
 		 */
 		public function get_update( $data ) {
 
+			if ( ! is_object( $data ) ) {
+				$data = new \stdClass();
+			}
+
 			foreach ( $this->plugins as $plugin ) {
 
 				$new_update = $this->check_update( $plugin['slug'], $plugin['version'] );

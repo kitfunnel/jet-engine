@@ -55,6 +55,7 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 				'arrow_icon'               => 'fa fa-angle-left',
 				'dots'                     => '',
 				'autoplay'                 => 'true',
+				'pause_on_hover'           => 'true',
 				'autoplay_speed'           => 5000,
 				'infinite'                 => 'true',
 				'center_mode'              => '',
@@ -72,13 +73,7 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 
 		public function render() {
 
-			$settings               = $this->get_settings();
-			$listing_id             = absint( $settings['lisitng_id'] );
-			$this->listing_id       = $listing_id;
-			$this->listing_query_id = \Jet_Engine\Query_Builder\Manager::instance()->listings->get_query_id(
-				$listing_id,
-				$settings
-			);
+			$this->setup_listing_props();
 
 			if ( ! $this->listing_id || ! get_post( $this->listing_id ) ) {
 				$this->print_no_listing_notice();
@@ -88,6 +83,16 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 			$this->render_posts();
 			jet_engine()->frontend->frontend_scripts();
 
+		}
+
+		public function setup_listing_props() {
+			$settings               = $this->get_settings();
+			$listing_id             = absint( $settings['lisitng_id'] );
+			$this->listing_id       = $listing_id;
+			$this->listing_query_id = \Jet_Engine\Query_Builder\Manager::instance()->listings->get_query_id(
+				$listing_id,
+				$settings
+			);
 		}
 
 		/**
@@ -222,12 +227,13 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 			);
 
 			foreach ( $keys as $key ) {
+				$setting = $settings[ $key ] ?? '';
 
-				if ( Jet_Engine_Tools::is_empty( $settings[ $key ] ) ) {
+				if ( Jet_Engine_Tools::is_empty( $setting ) ) {
 					continue;
 				}
 
-				$args[ str_replace( 'terms_', '', $key ) ] = esc_attr( $settings[ $key ] );
+				$args[ str_replace( 'terms_', '', $key ) ] = esc_attr( $setting );
 
 			}
 
@@ -264,8 +270,9 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 			array_walk( $args, array( $this, 'apply_macros_in_query' ) );
 
 			foreach ( array( 'terms_include', 'terms_exclude' ) as $key ) {
+				$setting = $settings[ $key ] ?? '';
 
-				$ids = jet_engine()->listings->macros->do_macros( $settings[ $key ], $tax );
+				$ids = jet_engine()->listings->macros->do_macros( $setting, $tax );
 				$ids = $this->explode_string( $ids );
 				$arg = str_replace( 'terms_', '', $key );
 
@@ -813,6 +820,10 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 
 			$terms = get_terms( $args );
 
+			if ( empty( $terms ) || is_wp_error( $terms ) ) {
+				$terms = array();
+			}
+
 			return $terms;
 
 		}
@@ -1033,24 +1044,28 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 				}
 			}
 
+			$post_id = apply_filters( 'jet-engine/listing/grid/lazy-load/post-id', $post_id );
+
 			$options = array(
 				'offset'  => $offset,
 				'post_id' => $post_id,
 			);
 
-			$current_obj_id = jet_engine()->listings->data->get_current_object_id();
-			$current_obj    = jet_engine()->listings->data->get_current_object();
+			$queried_id = $this->get_queried_id();
 
-			if ( $current_obj_id && $current_obj ) {
-				$options['queried_id'] = sprintf( '%s|%s', $current_obj_id, get_class( $current_obj ) );
+			if ( $queried_id ) {
+				$options['queried_id'] = $queried_id;
 			}
 
+			/*
+			This code not needed anymore with new ajax listing url.
 			if ( ( is_home() || is_archive() || is_search() ) && ! empty( $settings['is_archive_template'] ) ) {
 				global $wp_query;
 				$default_query = $this->get_default_query( $wp_query );
 				$default_query = apply_filters( 'jet-engine/listing/grid/posts-query-args', $default_query, $this, $settings );
 				$options['query'] = $default_query;
 			}
+			*/
 
 			$options = apply_filters( 'jet-engine/listing/grid/lazy-load/options', $options, $settings );
 
@@ -1220,6 +1235,7 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 					'arrow_icon'               => ! empty( $settings['arrow_icon'] ) ? $settings['arrow_icon'] : 'fa fa-angle-left',
 					'dots'                     => ! empty( $settings['dots'] ) ? $settings['dots'] : '',
 					'autoplay'                 => ! empty( $settings['autoplay'] ) ? $settings['autoplay'] : 'true',
+					'pause_on_hover'           => ! empty( $settings['pause_on_hover'] ) ? $settings['pause_on_hover'] : 'true',
 					'autoplay_speed'           => ! empty( $settings['autoplay_speed'] ) ? $settings['autoplay_speed'] : 5000,
 					'infinite'                 => ! empty( $settings['infinite'] ) ? $settings['infinite'] : 'true',
 					'center_mode'              => ! empty( $settings['center_mode'] ) ? $settings['center_mode'] : '',
@@ -1243,7 +1259,8 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 				$result['widget_settings'] = apply_filters(
 					'jet-engine/listing/grid/nav-widget-settings',
 					$result['widget_settings'],
-					$settings
+					$settings,
+					$this
 				);
 			}
 
@@ -1318,6 +1335,12 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 			if ( $this->is_masonry_enabled( $settings ) ) {
 				$container_classes[] = $base_class . '__masonry';
 				$container_attrs[]   = $this->get_masonry_options( $settings );
+			}
+
+			$queried_id = $this->get_queried_id();
+
+			if ( $queried_id ) {
+				$container_attrs[] = sprintf( 'data-queried-id="%s"', $queried_id );
 			}
 
 			printf( '<div class="%1$s jet-listing">', $base_class );
@@ -1475,6 +1498,8 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 				$custom_css = 'style="flex: 0 0 ' . $col_width . 'px; max-width: ' . $col_width . 'px;"';
 			}
 
+			//timer_start();
+
 			foreach ( $query as $post_obj ) {
 
 				if ( empty( $post_obj ) ) {
@@ -1507,7 +1532,7 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 				$classes = array(
 					$base_class . '__item',
 					'jet-listing-dynamic-post-' . $post_id,
-					$equal_cols_class
+					$equal_cols_class,
 				);
 
 				if ( $static_inject ) {
@@ -1736,6 +1761,7 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 			$options = array(
 				'autoplaySpeed'  => absint( $settings['autoplay_speed'] ),
 				'autoplay'       => filter_var( $settings['autoplay'], FILTER_VALIDATE_BOOLEAN ),
+				'pauseOnHover'   => filter_var( $settings['pause_on_hover'], FILTER_VALIDATE_BOOLEAN ),
 				'infinite'       => filter_var( $settings['infinite'], FILTER_VALIDATE_BOOLEAN ),
 				'centerMode'     => filter_var( $settings['center_mode'], FILTER_VALIDATE_BOOLEAN ),
 				'speed'          => absint( $settings['speed'] ),
@@ -1866,6 +1892,19 @@ if ( ! class_exists( 'Jet_Engine_Render_Listing_Grid' ) ) {
 
 		public function after_listing_grid() {
 			do_action( 'jet-engine/listing/grid/after-render', $this );
+		}
+
+		public function get_queried_id() {
+			$queried_id     = false;
+			$current_obj    = jet_engine()->listings->data->get_current_object();
+			$current_obj_id = jet_engine()->listings->data->get_current_object_id();
+
+			if ( $current_obj && $current_obj_id ) {
+				$queried_id = sprintf( '%s|%s', $current_obj_id, get_class( $current_obj ) );
+				$queried_id = apply_filters( 'jet-engine/listing/grid/queried-id', $queried_id, $current_obj_id, $current_obj );
+			}
+
+			return $queried_id;
 		}
 
 	}

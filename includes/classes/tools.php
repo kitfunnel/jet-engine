@@ -91,6 +91,55 @@ class Jet_Engine_Tools {
 
 	}
 
+	/**
+	 * Get options prepared to use by JetEngine fields from the callback
+	 * 
+	 * @param  [type] $callback [description]
+	 * @return [type]           [description]
+	 */
+	public static function get_options_from_callback( $callback = null, $is_blocks = false ) {
+		
+		if ( ! is_callable( $callback ) ) {
+			return [];
+		}
+
+		$options = call_user_func( $callback );
+
+		foreach ( $options as $value => $option ) {
+
+			if ( $is_blocks ) {
+				if ( ! is_array( $option ) ) {
+					$options[ $value ] = [
+						'value' => $value,
+						'label' => $option,
+					];
+				} else {
+
+					$value = isset( $option['value'] ) ? $option['value'] : $value;
+					$label = isset( $option['label'] ) ? $option['label'] : array_values( $option )[0];
+					
+					$options[ $value ] = [
+						'value' => $value,
+						'label' => $label,
+					];
+				}
+			} else {
+				if ( ! is_array( $option ) ) {
+					$options[ $value ] = $option;
+				} else {
+					$options[ $value ] = isset( $option['label'] ) ? $option['label'] : array_values( $option )[0];
+				}
+			}
+		}
+
+		if ( $is_blocks ) {
+			return array_values( $options );
+		} else {
+			return $options;
+		}
+
+	}
+
 	public static function safe_get( $key, $list = array(), $default = false ) {
 		return isset( $list[ $key ] ) ? $list[ $key ] : $default;
 	}
@@ -963,6 +1012,26 @@ class Jet_Engine_Tools {
 	 */
 	public static function get_default_menu_position() {
 		return apply_filters( 'jet-engine/tools/default-menu-position', '' );
+	}
+
+	/**
+	 * Ensures a string is a valid SQL 'order by' clause.
+	 *
+	 * Accepts one or more columns, with or without a sort order (ASC / DESC).
+	 * e.g. 'column_1', 'column_1, column_2', 'column_1 ASC, column_2 DESC' etc.
+	 *
+	 * Also accepts 'posts.column_1', 'posts.column_1, column_2', 'posts.column_1 ASC, column_2 DESC' etc.
+	 *
+	 * Also accepts 'RAND()'.
+	 *
+	 * @param string $orderby Order by clause to be validated.
+	 * @return string|false Returns $orderby if valid, false otherwise.
+	 */
+	public static function sanitize_sql_orderby( $orderby ) {
+		if ( preg_match( '/^\s*(([a-z0-9_\.]+|`[a-z0-9_\.]+`)(\s+(ASC|DESC))?\s*(,\s*(?=[a-z0-9_`\.])|$))+$/i', $orderby ) || preg_match( '/^\s*RAND\(\s*\)\s*$/i', $orderby ) ) {
+			return $orderby;
+		}
+		return false;
 	}
 
 }

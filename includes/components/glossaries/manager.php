@@ -31,18 +31,22 @@ class Manager {
 		$this->init_data();
 
 		require_once $this->component_path( 'settings.php' );
-		require_once $this->component_path( 'meta-fields.php' );
 		require_once $this->component_path( 'forms.php' );
 		require_once $this->component_path( 'filters.php' );
 
 		$this->settings    = new Settings();
-		$this->meta_fields = new Meta_Fields();
 		$this->forms       = new Forms();
 		$this->filters     = new Filters();
 
 		add_action( 'jet-engine/rest-api/init-endpoints', array( $this, 'init_rest' ) );
 		add_filter( 'mime_types', array( $this, 'ensure_allowed_import_mimes' ) );
+		add_action( 'jet-engine/meta-boxes/init-options-sources', array( $this, 'init_options_source' ) );
 
+	}
+
+	public function init_options_source() {
+		require_once $this->component_path( 'meta-fields.php' );
+		$this->meta_fields = new Meta_Fields();
 	}
 
 	public function ensure_allowed_import_mimes( $mimes ) {

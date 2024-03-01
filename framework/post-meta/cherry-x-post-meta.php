@@ -2,7 +2,7 @@
 /**
  * Post Meta module
  *
- * Version: 1.7.0
+ * Version: 1.8.0
  */
 
 // If this file is called directly, abort.
@@ -376,7 +376,9 @@ if ( ! class_exists( 'Cherry_X_Post_Meta' ) ) {
 		 */
 		public function prepare_field_value( $field, $value ) {
 
-			switch ( $field['type'] ) {
+			$field_type = isset( $field['type'] ) ? $field['type'] : false;
+
+			switch ( $field_type ) {
 				case 'repeater':
 
 					if ( is_array( $value ) && ! empty( $field['fields'] ) ) {
@@ -385,7 +387,10 @@ if ( ! class_exists( 'Cherry_X_Post_Meta' ) ) {
 
 						foreach ( $value as $item_id => $item_value ) {
 							foreach ( $item_value as $repeater_field_id => $repeater_field_value ) {
-								$value[ $item_id ][ $repeater_field_id ] = $this->prepare_field_value( $repeater_fields[ $repeater_field_id ], $repeater_field_value );
+
+								$r_field = isset( $repeater_fields[ $repeater_field_id ] ) ? $repeater_fields[ $repeater_field_id ] : false;
+								$value[ $item_id ][ $repeater_field_id ] = $this->prepare_field_value( $r_field, $repeater_field_value );
+
 							}
 						}
 					}
@@ -503,7 +508,7 @@ if ( ! class_exists( 'Cherry_X_Post_Meta' ) ) {
 			/**
 			 * Hook on before current metabox saving for all meta boxes
 			 */
-			do_action( 'cx_post_meta/before_save', $post_id, $post );
+			do_action( 'cx_post_meta/before_save', $post_id, $post, $this );
 
 			/**
 			 * Hook on before current metabox saving with meta box id as dynamic part
@@ -575,7 +580,14 @@ if ( ! class_exists( 'Cherry_X_Post_Meta' ) ) {
 					continue;
 				}
 
-				$pre_processed = apply_filters( 'cx_post_meta/pre_process_key/' . $key, false, $post_id, $key );
+				$pre_processed = apply_filters( 
+					'cx_post_meta/pre_process_key/' . $key, 
+					false, 
+					$post_id, 
+					$key,
+					$field,
+					$this
+				);
 
 				if ( $pre_processed ) {
 					continue;
@@ -599,7 +611,14 @@ if ( ! class_exists( 'Cherry_X_Post_Meta' ) ) {
 				/**
 				 * Fires on specific key saving
 				 */
-				do_action( 'cx_post_meta/before_save_meta/' . $key, $post_id, $value, $key );
+				do_action( 
+					'cx_post_meta/before_save_meta/' . $key, 
+					$post_id,
+					$value,
+					$key,
+					$field,
+					$this
+				);
 
 				if ( 'textarea' === $field['type'] && false === strpos( $value, "\\" ) ) {
 					$value = wp_slash( $value );
@@ -725,7 +744,9 @@ if ( ! class_exists( 'Cherry_X_Post_Meta' ) ) {
 				return '';
 			}
 
-			$pre_value = apply_filters( 'cx_post_meta/pre_get_meta/' . $key, false, $post, $key, $default, $field );
+			$pre_value = apply_filters( 'cx_post_meta/pre_get_meta', false, $post, $key, $default, $field );
+
+			$pre_value = apply_filters( 'cx_post_meta/pre_get_meta/' . $key, $pre_value, $post, $key, $default, $field );
 
 			if ( false !== $pre_value ) {
 				return $pre_value;

@@ -777,23 +777,37 @@ class Jet_Engine_Base_DB {
 		foreach ( $order as $order_clause ) {
 			if ( ! empty( $order_clause['orderby'] ) ) {
 
-				$orderby = $order_clause['orderby'];
-				$order   = ! empty( $order_clause['order'] ) ? $order_clause['order'] : 'desc';
-				$order   = strtoupper( $order );
+				// Sanitize SQL `column name` string to prevent SQL injection.
+				// See: https://github.com/Crocoblock/issues-tracker/issues/5251
+				$orderby = \Jet_Engine_Tools::sanitize_sql_orderby( $order_clause['orderby'] );
+				$order   = ! empty( $order_clause['order'] ) ? strtoupper( $order_clause['order'] ) : 'DESC';
+				$order   = in_array( $order, array( 'ASC', 'DESC' ) ) ? $order : 'DESC';
 				$type    = ! empty( $order_clause['type'] ) ? $order_clause['type'] : false;
+
+				if ( ! $orderby ) {
+					continue;
+				}
 
 				switch ( $type ) {
 					case 'integer':
-						$orderby = sprintf( 'CAST( %s AS DECIMAL )', $orderby );
-						break;
 					case 'float':
-						$orderby = sprintf( 'CAST( %s AS DECIMAL )', $orderby );
-						break;
 					case 'timestamp':
+					case 'NUMERIC':
+					case 'DECIMAL':
+					case 'TIMESTAMP':
 						$orderby = sprintf( 'CAST( %s AS DECIMAL )', $orderby );
 						break;
 					case 'date':
 						$orderby = sprintf( 'CAST( %s AS DATE )', $orderby );
+						break;
+
+					case 'DATE':
+					case 'DATETIME':
+					case 'TIME':
+					case 'BINARY':
+					case 'SIGNED':
+					case 'UNSIGNED':
+						$orderby = sprintf( 'CAST( %1$s AS %2$s )', $orderby, $type );
 						break;
 				}
 

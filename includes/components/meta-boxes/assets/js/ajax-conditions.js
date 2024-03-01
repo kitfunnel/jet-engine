@@ -299,7 +299,7 @@
 
 	}
 
-	if ( window.wp && wp.data && wp.data.select && wp.data.select( 'core/editor' ) ) {
+	if ( window.wp && wp.data && wp.data.select && wp.data.select( 'core/editor' ) && $( 'body' ).hasClass( 'block-editor-page' ) ) {
 		new GutenAjaxConditions();
 	} else {
 		new AjaxConditions();

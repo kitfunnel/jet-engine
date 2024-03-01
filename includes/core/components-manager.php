@@ -100,6 +100,11 @@ if ( ! class_exists( 'Jet_Engine_Components' ) ) {
 					'filepath'   => jet_engine()->plugin_path( 'includes/components/bricks-views/manager.php' ),
 					'class_name' => '\Jet_Engine\Bricks_Views\Manager',
 				),
+				'timber_views' => array(
+					'filepath'   => jet_engine()->plugin_path( 'includes/components/timber-views/timber.php' ),
+					'class_name' => '\Jet_Engine\Timber_Views\Package',
+					'singleton'  => true,
+				),
 			);
 
 			foreach ( $default_components as $component_slug => $component_data ) {
@@ -145,7 +150,7 @@ if ( ! class_exists( 'Jet_Engine_Components' ) ) {
 
 					require_once $data['filepath'];
 
-					if ( $class_name ) {
+					if ( $class_name && empty( $data['singleton'] ) ) {
 						jet_engine()->$slug = new $class_name();
 					}
 

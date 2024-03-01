@@ -78,23 +78,34 @@ class RowActions extends Component {
 				this.cancelDisconnect();
 			} }
 		>
-			{ text }
-			<a
-				href="#"
-				onClick={ ( event ) => {
-					event.preventDefault();
-					event.stopPropagation();
-					this.processDisconnect();
-				} }
-			>{ window.JetEngineRelationsCommon.i18n.yes }</a>
-			<a
-				href="#"
-				onClick={ ( event ) => {
-					event.preventDefault();
-					event.stopPropagation();
-					this.cancelDisconnect();
-				} }
-			>{ window.JetEngineRelationsCommon.i18n.no }</a>
+			<div style={ { 
+				width: '100px',
+				display: 'flex',
+				padding: '3px',
+				justifyContent: 'center',
+				textAlign: 'center',
+				flexWrap: 'wrap'
+			} }>
+				{ text }
+				<a
+					href="#"
+					style={{ margin: '0 4px' }}
+					onClick={ ( event ) => {
+						event.preventDefault();
+						event.stopPropagation();
+						this.processDisconnect();
+					} }
+				>{ window.JetEngineRelationsCommon.i18n.yes }</a>
+				<a
+					href="#"
+					style={{ margin: '0 4px' }}
+					onClick={ ( event ) => {
+						event.preventDefault();
+						event.stopPropagation();
+						this.cancelDisconnect();
+					} }
+				>{ window.JetEngineRelationsCommon.i18n.no }</a>
+			</div>
 		</Popover>
 	}
 

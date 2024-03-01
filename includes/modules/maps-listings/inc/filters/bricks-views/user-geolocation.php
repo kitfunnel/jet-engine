@@ -38,6 +38,16 @@ class User_Geolocation extends Jet_Smart_Filters_Bricks_Base {
 
 		$this->start_jet_control_group( 'section_general' );
 
+		$query_builder_link = admin_url( 'admin.php?page=jet-engine-query' );
+
+		$this->register_jet_control(
+			'query_notice',
+			[
+				'content' => sprintf( __( 'This filter is compatible only with queries from <a href="%s" target="_blank">JetEngine Query Builder</a>. ALso you need to set up <a href="https://crocoblock.com/knowledge-base/jetengine/how-to-set-geo-search-based-on-user-geolocation/" target="_blank">Geo Query</a> in your query settings to meke filter to work correctly.', 'jet-engine' ), $query_builder_link ),
+				'type' => 'info',
+			]
+		);
+
 		$this->register_jet_control(
 			'filter_id',
 			[

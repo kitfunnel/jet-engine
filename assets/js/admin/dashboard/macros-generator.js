@@ -76,14 +76,19 @@ Vue.component( 'jet-engine-macros-generator', {
 			res += this.result.macros;
 
 			if ( this.result[ this.result.macros ] ) {
-				for ( const prop in this.result[ this.result.macros ] ) {
+
+
+				for ( var i = 0; i < this.macrosControls.length; i++ ) {
 					res += '|';
 
-					if ( undefined !== this.result[ this.result.macros ][ prop ] ) {
-						res += this.result[ this.result.macros ][ prop ];
-					}
+					let controlName = this.macrosControls[ i ].name;
 
+					if ( undefined !== this.result[ this.result.macros ][ controlName ] ) {
+						res += this.result[ this.result.macros ][ controlName ];
+					}
+					
 				}
+
 			}
 
 			res += '%';
@@ -182,6 +187,7 @@ Vue.component( 'jet-engine-macros-generator', {
 					type: type,
 					name: controlID,
 					label: label,
+					description: control.description || '',
 					default: defaultVal,
 					optionsList: optionsList,
 					groupsList: groupsList,

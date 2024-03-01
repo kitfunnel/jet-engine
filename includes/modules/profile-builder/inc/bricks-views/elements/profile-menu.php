@@ -232,6 +232,14 @@ class Profile_Menu extends Base {
 
 		$this->enqueue_scripts();
 
+		// For preview in Editor.
+		if ( ! $this->is_frontend ) {
+			remove_filter(
+				'jet-engine/profile-builder/render/profile-menu-items',
+				array( Module::instance()->frontend->menu, 'filter_menu_items' )
+			);
+		}
+
 		echo "<div {$this->render_attributes( '_root' )}>";
 		Module::instance()->frontend->profile_menu( array(
 			'menu_context'       => $context,

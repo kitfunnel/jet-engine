@@ -350,6 +350,7 @@ if ( ! class_exists( 'Jet_Engine_Frontend' ) ) {
 			$open_in_new = isset( $settings['listing_link_open_in_new'] ) ? $settings['listing_link_open_in_new'] : '';
 			$rel_attr    = isset( $settings['listing_link_rel_attr'] ) ? $settings['listing_link_rel_attr'] : '';
 			$aria_label  = isset( $settings['listing_link_aria_label'] ) ? $settings['listing_link_aria_label'] : '';
+			$link_text   = '';
 
 			if ( $open_in_new ) {
 				$overlay_attrs['data-target'] = '_blank';
@@ -362,12 +363,13 @@ if ( ! class_exists( 'Jet_Engine_Frontend' ) ) {
 
 			if ( $aria_label ) {
 				$link_attrs['aria-label'] = esc_attr( $aria_label );
+				$link_text = esc_html( $aria_label );
 			}
 
 			$overlay_attrs = apply_filters( 'jet-engine/listings/frontend/listing-link/overlay-attrs', $overlay_attrs, $settings );
 			$link_attrs    = apply_filters( 'jet-engine/listings/frontend/listing-link/link-attrs', $link_attrs, $settings );
 
-			$link = sprintf( '<a %s></a>', Jet_Engine_Tools::get_attr_string( $link_attrs ) );
+			$link = sprintf( '<a %s>%s</a>', Jet_Engine_Tools::get_attr_string( $link_attrs ), $link_text );
 
 			return sprintf(
 				'<div %3$s>%1$s%2$s</div>',

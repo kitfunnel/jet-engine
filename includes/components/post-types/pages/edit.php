@@ -147,6 +147,7 @@ if ( ! class_exists( 'Jet_Engine_CPT_Page_Edit' ) ) {
 				'jet-engine-cpt-edit',
 				'JetEngineCPTConfig',
 				$this->manager->get_admin_page_config( array(
+					'is_post_types_editor' => true,
 					'api_path_edit'        => $api_path_edit,
 					'api_path_get'         => $api_path_get,
 					'api_path_reset'       => jet_engine()->api->get_route( 'reset-built-in-post-type' ),

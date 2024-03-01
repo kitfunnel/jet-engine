@@ -49,8 +49,8 @@ class Blocks_Integration extends Condition_Checker {
 				$dynamic_data = $condition_value ? json_decode( $condition_value, true ) : false;
 
 				if ( $dynamic_data && is_array( $dynamic_data ) ) {
-					$condition['__dynamic__'][ $condition_key ] = true;
-					$parsed_dynamic_conditions[ $index ]['__dynamic__'][ $condition_key ] = true;
+					$condition['__dynamic__'][ $condition_key ] = $condition_value;
+					$parsed_dynamic_conditions[ $index ]['__dynamic__'][ $condition_key ] = $condition_value;
 					$parsed_dynamic_conditions[ $index ][ $condition_key ] = jet_engine()->blocks_views->dynamic_content->data->get_dynamic_value( $dynamic_data, array(), array() );
 				} else {
 					$parsed_dynamic_conditions[ $index ][ $condition_key ] = $condition_value;

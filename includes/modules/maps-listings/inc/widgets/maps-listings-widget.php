@@ -170,10 +170,17 @@ class Maps_Listings_Widget extends \Elementor\Jet_Listing_Grid_Widget {
 			'custom_center',
 			array(
 				'label'       => __( 'Map Center', 'jet-engine' ),
+				'label_block' => true,
 				'type'        => Controls_Manager::TEXTAREA,
 				'default'     => '',
-				'label_block' => true,
-				'condition'    => array(
+				'dynamic'     => array(
+					'active'     => true,
+					'categories' => array(
+						\Jet_Engine_Dynamic_Tags_Module::TEXT_CATEGORY,
+						\Jet_Engine_Dynamic_Tags_Module::JET_MACROS_CATEGORY,
+					),
+				),
+				'condition'   => array(
 					'auto_center' => '',
 				),
 			)
@@ -598,6 +605,33 @@ class Maps_Listings_Widget extends \Elementor\Jet_Listing_Grid_Widget {
 				'return_value' => 'true',
 				'default'      => 'true',
 				'separator'    => 'before',
+			)
+		);
+
+		$this->add_control(
+			'cluster_max_zoom',
+			array(
+				'label'       => esc_html__( 'Cluster Max Zoom', 'jet-engine' ),
+				'description' => esc_html__( 'Maximum zoom level that a marker can be part of a cluster', 'jet-engine' ),
+				'type'        => Controls_Manager::NUMBER,
+				'min'         => 1,
+				'max'         => 20,
+				'condition'   => array(
+					'marker_clustering' => 'true',
+				),
+			)
+		);
+
+		$this->add_control(
+			'cluster_radius',
+			array(
+				'label'       => esc_html__( 'Cluster Radius', 'jet-engine' ),
+				'description' => esc_html__( 'Radius of each cluster when clustering markers in px', 'jet-engine' ),
+				'type'        => Controls_Manager::NUMBER,
+				'min'         => 10,
+				'condition'   => array(
+					'marker_clustering' => 'true',
+				),
 			)
 		);
 

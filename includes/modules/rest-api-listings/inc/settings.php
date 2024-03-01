@@ -78,7 +78,12 @@ class Settings {
 			$items = Module::instance()->request->set_endpoint( $item, true )->get_items( array(), true );
 
 			if ( false === $items ) {
-				wp_send_json_error( array( 'message' => Module::instance()->request->get_error() ) );
+				wp_send_json_error( 
+					array( 
+						'message' => Module::instance()->request->get_error(), 
+						'error_details' => Module::instance()->request->get_error_details() 
+					) 
+				);
 			}
 
 			if ( ! is_array( $items ) ) {

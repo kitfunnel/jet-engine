@@ -126,13 +126,16 @@ if ( ! class_exists( 'Jet_Engine_Module_Calendar' ) ) {
 			add_action( 'jet-engine/blocks-views/register-block-types', array( $this, 'register_block_types' ) );
 			add_filter( 'jet-engine/blocks-views/editor/config',        array( $this, 'add_editor_config' ) );
 
+			add_action( 'jet-engine/register-macros', array( $this, 'register_macros' ) );
+
+			add_filter( 'jet-smart-filters/query/allowed-ajax-actions', array( $this, 'allow_month_action' ) );
+
 			// Bricks Integration
 			require jet_engine()->plugin_path( 'includes/modules/calendar/bricks-views/manager.php' );
 			new Jet_Engine\Modules\Calendar\Bricks_Views\Manager();
 
-			add_action( 'jet-engine/register-macros', array( $this, 'register_macros' ) );
-
-			add_filter( 'jet-smart-filters/query/allowed-ajax-actions', array( $this, 'allow_month_action' ) );
+			require jet_engine()->plugin_path( 'includes/modules/calendar/advanced-date-field/manager.php' );
+			Jet_Engine_Advanced_Date_Field::instance();
 
 		}
 
@@ -187,7 +190,6 @@ if ( ! class_exists( 'Jet_Engine_Module_Calendar' ) ) {
 			if ( $current_post ) {
 				global $post;
 				$post = get_post( $current_post );
-
 				jet_engine()->listings->data->set_current_object( $post );
 			}
 

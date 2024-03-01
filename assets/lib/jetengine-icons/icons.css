@@ -76,9 +76,11 @@
 .jet-engine-icon-profile-content:before {
 	content: "\e910";
 }
-
 .jet-engine-icon-user-geolocation:before {
-	content: "\e910";
+	content: "\e911";
+}
+.jet-engine-icon-location-distance:before {
+	content: "\e912";
 }
 
 .category-jetsmartfilters .bricks-add-element .element-icon {

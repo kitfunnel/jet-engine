@@ -599,6 +599,31 @@ if ( -1 !== window.JetEngineListingData.activeModules.indexOf( 'maps-listings' )
 										props.setAttributes( { marker_clustering: ! attributes.marker_clustering } );
 									} }
 								/>
+								{ attributes.marker_clustering &&
+									<div>
+										<TextControl
+											type="number"
+											label={ __( 'Cluster Max Zoom' ) }
+											help={ __( 'Maximum zoom level that a marker can be part of a cluster' ) }
+											value={ attributes.cluster_max_zoom }
+											min={ `1` }
+											max={ `20` }
+											onChange={ newValue => {
+												props.setAttributes( { cluster_max_zoom: Number(newValue) } );
+											} }
+										/>
+										<TextControl
+											type="number"
+											label={ __( 'Cluster Radius' ) }
+											help={ __( 'Radius of each cluster when clustering markers in px' ) }
+											value={ attributes.cluster_radius }
+											min={ `10` }
+											onChange={ newValue => {
+												props.setAttributes( { cluster_radius: Number(newValue) } );
+											} }
+										/>
+									</div>
+								}
 							</PanelBody>
 							<PanelBody
 								title={ __( 'Popup' ) }

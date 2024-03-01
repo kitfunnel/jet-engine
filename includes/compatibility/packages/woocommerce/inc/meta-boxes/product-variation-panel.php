@@ -40,8 +40,7 @@ class Product_Variation_Panel extends Product_Data_Panel {
 
 		$this->fields  = $this->prepare_meta_fields( $meta_box['meta_fields'] );
 
-		$this->init_builder();
-
+		//$this->init_builder();
 		add_action( 'admin_enqueue_scripts', [ $this, 'maybe_enqueue_custom_scripts' ], 0 );
 
 		$position = $meta_box['args']['wc_product_variation_position'] ?? 'woocommerce_product_after_variable_attributes';
@@ -61,7 +60,14 @@ class Product_Variation_Panel extends Product_Data_Panel {
 	 *
 	 * @return void
 	 */
-	public function maybe_enqueue_custom_scripts() {
+	public function maybe_enqueue_custom_scripts( $hook ) {
+
+		if ( ! $this->is_allowed_on_current_admin_hook( $hook ) ) {
+			return;
+		}
+
+		$this->init_builder();
+
 		foreach ( $this->fields as $field ) {
 			switch ( $field['type'] ) {
 				// --- Make this part better in the future.
@@ -98,6 +104,8 @@ class Product_Variation_Panel extends Product_Data_Panel {
 	 * @return void
 	 */
 	public function add_meta_box_variation_content( $loop, $variation_data, $variation ) {
+
+		$this->init_builder();
 
 		foreach ( $this->fields as $key => $field ) {
 			if ( ! $key ) {
@@ -154,9 +162,7 @@ class Product_Variation_Panel extends Product_Data_Panel {
 					}
 				}
 
-				if ( $this->to_timestamp( $field ) ) {
-					$_POST[ $key ][ $i ] = apply_filters( 'cx_post_meta/strtotime', strtotime( $_POST[ $key ][ $i ] ), $_POST[ $key ][ $i ] );
-				}
+				$_POST[ $key ][ $i ] = $this->sanitize_meta( $field, $_POST[ $key ][ $i ] );
 
 				update_post_meta( $variation_id, $key, $_POST[ $key ][ $i ] );
 			}

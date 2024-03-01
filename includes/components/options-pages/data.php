@@ -199,7 +199,9 @@ if ( ! class_exists( 'Jet_Engine_Options_Data' ) ) {
 			/**
 			 * @todo Validate meta fields before saving - ensure that used correct types and all names was set.
 			 */
-			$meta_fields = ! empty( $request['fields'] ) ? $request['fields'] : array();
+			$meta_fields = ! empty( $request['meta_fields'] )
+								? $request['meta_fields'] : ( ! empty( $request['fields'] )
+									? $request['fields'] : array() );
 
 			$result['slug']        = $slug;
 			$result['labels']      = $labels;
@@ -208,40 +210,6 @@ if ( ! class_exists( 'Jet_Engine_Options_Data' ) ) {
 
 			return $result;
 
-		}
-
-		/**
-		 * Sanitize meta fields
-		 *
-		 * @param  [type] $meta_fields [description]
-		 * @return [type]              [description]
-		 */
-		public function sanitize_meta_fields( $meta_fields ) {
-
-			foreach ( $meta_fields as $key => $field ) {
-
-				// If name is empty - create it from title, else - santize it
-				if ( empty( $field['name'] ) ) {
-					$field['name'] = $this->sanitize_slug( $field['title'] );
-				} else {
-					$field['name'] = $this->sanitize_slug( $field['name'] );
-				}
-
-				// If still empty - create random name
-				if ( empty( $field['name'] ) ) {
-					$field['name'] = '_field_' . rand( 10000, 99999 );
-				}
-
-				// If name in blak list - add underscore at start
-				if ( in_array( $field['name'], $this->meta_blacklist() ) ) {
-					$meta_fields[ $key ]['name'] = '_' . $field['name'];
-				} else {
-					$meta_fields[ $key ]['name'] = $field['name'];
-				}
-
-			}
-
-			return $meta_fields;
 		}
 
 		/**

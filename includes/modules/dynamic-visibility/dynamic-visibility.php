@@ -32,7 +32,7 @@ if ( ! class_exists( 'Jet_Engine_Module_Dynamic_Visibility' ) ) {
 		 * @return string
 		 */
 		public function module_name() {
-			return __( 'Dynamic Visibility for Widgets and Sections', 'jet-engine' );
+			return __( 'Dynamic Visibility', 'jet-engine' );
 		}
 
 		/**

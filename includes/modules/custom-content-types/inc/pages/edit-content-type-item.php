@@ -95,7 +95,7 @@ class Edit_Item_Page extends \Jet_Engine_Options_Page_Factory {
 		$this->pages_manager    = $pages_manager;
 		$this->hide_field_names = $page['hide_field_names'];
 
-		if ( $this->is_page_now() ) {
+		if ( $this->is_page_now() && ! empty( $this->action ) ) {
 
 			$this->setup_page_fields();
 

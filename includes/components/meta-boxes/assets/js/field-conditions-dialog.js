@@ -161,7 +161,8 @@ Vue.component( 'jet-meta-field-conditions-dialog', {
 			var selectedField = this.conditions[ conditionIndex ].field,
 				selectedFieldIndex,
 				selectedFieldOptions,
-				result = [];
+				result = [],
+				optionsSource = 'manual';
 
 			if ( ! selectedField ) {
 				return result;
@@ -173,17 +174,54 @@ Vue.component( 'jet-meta-field-conditions-dialog', {
 				return result;
 			}
 
-			if ( undefined === this.fieldsList[ selectedFieldIndex ].options ) {
-				return result;
+			if ( this.fieldsList[ selectedFieldIndex ].options_source ) {
+				optionsSource = this.fieldsList[ selectedFieldIndex ].options_source;
 			}
 
-			selectedFieldOptions = this.fieldsList[ selectedFieldIndex ].options;
+			switch ( optionsSource ) {
+				case 'manual':
 
-			for ( var i = 0; i < selectedFieldOptions.length; i++ ) {
-				result.push( {
-					value: selectedFieldOptions[i].key,
-					label: selectedFieldOptions[i].value,
-				} )
+					if ( undefined === this.fieldsList[ selectedFieldIndex ].options ) {
+						return result;
+					}
+
+					selectedFieldOptions = this.fieldsList[ selectedFieldIndex ].options;
+
+					for ( var i = 0; i < selectedFieldOptions.length; i++ ) {
+						result.push( {
+							value: selectedFieldOptions[i].key,
+							label: selectedFieldOptions[i].value,
+						} );
+					}
+
+					break;
+
+				case 'manual_bulk':
+
+					if ( undefined === this.fieldsList[ selectedFieldIndex ].bulk_options ) {
+						return result;
+					}
+
+					selectedFieldOptions = this.fieldsList[ selectedFieldIndex ].bulk_options;
+					selectedFieldOptions = selectedFieldOptions.split( '\n' );
+
+					for ( var i = 0; i < selectedFieldOptions.length; i++ ) {
+						var optionValue = selectedFieldOptions[i],
+							optionLabel = selectedFieldOptions[i];
+
+						if ( -1 !== selectedFieldOptions[i].indexOf( '::' ) ) {
+							var optionData = selectedFieldOptions[i].split( '::' );
+							optionValue = optionData[0];
+							optionLabel = optionData[1];
+						}
+
+						result.push( {
+							value: optionValue,
+							label: optionLabel,
+						} );
+					}
+
+					break;
 			}
 
 			return result;
@@ -238,6 +276,19 @@ Vue.component( 'jet-meta-field-conditions-dialog', {
 			return result;
 		},
 
+		useRemoteCb: function( conditionIndex ) {
+			return this.isGlossaryField( conditionIndex ) || this.isQueryField( conditionIndex );
+		},
+
+		getRemoteFields: function( conditionIndex, query, values ) {
+
+			if ( this.isGlossaryField( conditionIndex ) ) {
+				return this.getGlossaryFields( conditionIndex, query, values );
+			}
+
+			return this.getQueryFields( conditionIndex, query, values );
+		},
+
 		isGlossaryField: function( conditionIndex ) {
 			var selectedField = this.conditions[ conditionIndex ].field,
 				selectedFieldIndex;
@@ -252,7 +303,13 @@ Vue.component( 'jet-meta-field-conditions-dialog', {
 				return false;
 			}
 
-			return true === this.fieldsList[ selectedFieldIndex ].options_from_glossary;
+			if ( this.fieldsList[ selectedFieldIndex ].options_source && 'glossary' == this.fieldsList[ selectedFieldIndex ].options_source ) {
+				return true;
+			} else if ( this.fieldsList[ selectedFieldIndex ].options_source && 'glossary' !== this.fieldsList[ selectedFieldIndex ].options_source ) {
+				return false;
+			} else {
+				return true === this.fieldsList[ selectedFieldIndex ].options_from_glossary;
+			}
 		},
 
 		getGlossaryFields: function( conditionIndex, query, values ) {
@@ -285,6 +342,69 @@ Vue.component( 'jet-meta-field-conditions-dialog', {
 				path: JetEngineFieldsConfig.api_path_search_glossary_fields + '?' + window.JetEngineTools.buildQuery( {
 					query: query,
 					glossary_id: glossaryId,
+					values: values,
+				} )
+			} );
+		},
+
+		isQueryField: function( conditionIndex ) {
+			var selectedField = this.conditions[ conditionIndex ].field,
+				selectedFieldIndex;
+
+			if ( ! selectedField ) {
+				return false;
+			}
+
+			selectedFieldIndex = this.fieldsNames.indexOf( selectedField );
+
+			if ( -1 === selectedFieldIndex ) {
+				return false;
+			}
+
+			if ( undefined === this.fieldsList[ selectedFieldIndex ].options_source ) {
+				return false;
+			}
+
+			return ( 'query' === this.fieldsList[selectedFieldIndex].options_source );
+		},
+
+		getQueryFields: function( conditionIndex, query, values ) {
+			var selectedField = this.conditions[ conditionIndex ].field,
+				selectedFieldIndex,
+				queryId,
+				valueField,
+				labelField;
+
+			if ( ! selectedField ) {
+				return;
+			}
+
+			selectedFieldIndex = this.fieldsNames.indexOf( selectedField );
+
+			if ( -1 === selectedFieldIndex ) {
+				return;
+			}
+
+			queryId = this.fieldsList[ selectedFieldIndex ].query_id;
+
+			if ( ! queryId ) {
+				return;
+			}
+
+			valueField = this.fieldsList[ selectedFieldIndex ].query_value_field ?? '';
+			labelField = this.fieldsList[ selectedFieldIndex ].query_label_field ?? '';
+
+			if ( values.length ) {
+				values = values.join( ',' );
+			}
+
+			return wp.apiFetch( {
+				method: 'get',
+				path: JetEngineFieldsConfig.api_path_search_query_field_options + '?' + window.JetEngineTools.buildQuery( {
+					q: query,
+					query_id: queryId,
+					value_field: valueField,
+					label_field: labelField,
 					values: values,
 				} )
 			} );

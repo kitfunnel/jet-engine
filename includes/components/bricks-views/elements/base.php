@@ -111,7 +111,7 @@ class Base extends \Bricks\Element {
 
 		if ( bricks_is_rest_call() ) {
 			$data = file_get_contents( 'php://input' );
-		} elseif ( wp_doing_ajax() && 'bricks_render_element' === $_REQUEST['action'] ) {
+		} elseif ( wp_doing_ajax() && isset( $_REQUEST['action'] ) && 'bricks_render_element' === $_REQUEST['action'] ) {
 			$data = $_REQUEST;
 		}
 

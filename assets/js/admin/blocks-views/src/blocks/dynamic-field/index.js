@@ -392,6 +392,7 @@ registerBlockType( 'jet-engine/dynamic-field', {
 								<TextareaControl
 									type="text"
 									label={ __("Field format") }
+									help={ __("%s will be replaced with field value. If you need use plain % sign, replace it with %% (for example for JetEngine macros wrappers)") }
 									value={ attributes.dynamic_field_format }
 									onChange={ newValue => {
 										props.setAttributes({

@@ -219,7 +219,7 @@ class CCT_Query extends \Jet_Engine\Query_Builder\Queries\Base_Query {
 
 				if ( 'orderby' === $prop ) {
 					$key = 'type';
-					$value = ( 'meta_key' === $value ) ? 'CHAR' : 'DECIMAL';
+					$value = ( 'meta_value' === $value ) ? 'CHAR' : 'DECIMAL';
 				} elseif ( 'meta_key' === $prop ) {
 					$key = 'orderby';
 				}

@@ -23,6 +23,8 @@ if ( ! class_exists( 'Jet_Engine_WPML_Package' ) ) {
 			add_filter( 'jet-engine/forms/render/form-id',                  array( $this, 'set_translated_object' ) );
 			add_filter( 'jet-engine/profile-builder/template-id',           array( $this, 'set_translated_object' ) );
 			add_filter( 'jet-engine/relations/get_related_posts',           array( $this, 'set_translated_related_posts' ) );
+			add_filter( 'jet-engine/compatibility/translate/post',          array( $this, 'set_translated_object' ) );
+			add_filter( 'jet-engine/compatibility/translate/term',          array( $this, 'set_translated_object' ), 10, 2 );
 
 			// Translate CPT Name
 			if ( jet_engine()->cpt ) {
@@ -70,12 +72,21 @@ if ( ! class_exists( 'Jet_Engine_WPML_Package' ) ) {
 			add_filter( 'jet-engine/relations/types/posts/get-items', array( $this, 'filtered_relations_posts_items' ), 10, 2 );
 			add_filter( 'jet-engine/relations/raw-args',              array( $this, 'translate_relations_labels' ) );
 
-			if ( is_admin() ) {
-				add_action( 'icl_make_duplicate', array( $this, 'sync_relations_on_make_duplicate' ), 10, 4 );
-			}
+			$auto_sync_relations = apply_filters( 'jet-engine/compatibility/wpml/auto-sync-relations', true );
 
-			if ( is_admin() || wpml_is_rest_request() ) {
-				add_action( 'icl_pro_translation_completed', array( $this, 'sync_relations_on_translation_completed' ), 10, 3 );
+			if ( $auto_sync_relations ) {
+
+				if ( is_admin() ) {
+					add_action( 'icl_make_duplicate', array( $this, 'sync_relations_on_make_duplicate' ), 10, 4 );
+				}
+
+				if ( is_admin() || wpml_is_rest_request() ) {
+					add_action( 'icl_pro_translation_completed', array( $this, 'sync_relations_on_translation_completed' ), 10, 3 );
+				}
+
+				add_action( 'jet-engine/relation/update/after', array( $this, 'sync_relations_on_update' ), 10, 4 );
+				add_action( 'jet-engine/relation/delete/after', array( $this, 'sync_relations_on_delete' ), 10, 4 );
+
 			}
 		}
 
@@ -120,7 +131,8 @@ if ( ! class_exists( 'Jet_Engine_WPML_Package' ) ) {
 
 			foreach ( $relations as $rel_id => $relation ) {
 
-				$is_parent = $rel_type === $relation->get_args( 'parent_object' );
+				$is_parent   = $rel_type === $relation->get_args( 'parent_object' );
+				$meta_fields = $relation->get_args( 'meta_fields' );
 
 				if ( $is_parent ) {
 					$rel_items = $relation->get_children( $original_id, 'ids' );
@@ -151,6 +163,10 @@ if ( ! class_exists( 'Jet_Engine_WPML_Package' ) ) {
 					if ( $is_parent ) {
 						$relation->update( $translated_id, $new_rel_item );
 
+						if ( empty( $meta_fields ) ) {
+							continue;
+						}
+
 						$meta     = $relation->get_all_meta( $original_id, $rel_item );
 						$new_meta = $relation->get_all_meta( $translated_id, $new_rel_item );
 						$new_meta = array_merge( $meta, $new_meta );
@@ -161,6 +177,10 @@ if ( ! class_exists( 'Jet_Engine_WPML_Package' ) ) {
 
 					} else {
 						$relation->update( $new_rel_item, $translated_id );
+
+						if ( empty( $meta_fields ) ) {
+							continue;
+						}
 
 						$meta     = $relation->get_all_meta( $rel_item, $original_id );
 						$new_meta = $relation->get_all_meta( $new_rel_item, $translated_id );
@@ -174,18 +194,137 @@ if ( ! class_exists( 'Jet_Engine_WPML_Package' ) ) {
 			}
 		}
 
+		public function sync_relations_on_update( $parent_id, $child_id, $item_id, $relation ) {
+
+			if ( empty( $item_id ) ) {
+				return;
+			}
+
+			$parent_obj_data = jet_engine()->relations->types_helper->type_parts_by_name( $relation->get_args( 'parent_object' ) );
+			$child_obj_data  = jet_engine()->relations->types_helper->type_parts_by_name( $relation->get_args( 'child_object' ) );
+
+			$support_types = array( 'posts', 'terms' );
+
+			if ( ! in_array( $parent_obj_data[0], $support_types ) || ! in_array( $child_obj_data[0], $support_types ) ) {
+				return;
+			}
+
+			if ( ! $this->is_item_translated( $parent_obj_data[1], $parent_obj_data[0] ) ||
+				 ! $this->is_item_translated( $child_obj_data[1], $child_obj_data[0] )
+			) {
+				return;
+			}
+
+			$parent_translations = $this->get_item_translations( $parent_id, $parent_obj_data[1] );
+			$child_translations  = $this->get_item_translations( $child_id, $child_obj_data[1] );
+
+			remove_action( 'jet-engine/relation/update/after', array( $this, 'sync_relations_on_update' ) );
+
+			foreach ( $parent_translations as $lang => $translation ) {
+
+				if ( $translation->element_id == $parent_id ) {
+					continue;
+				}
+
+				if ( ! isset( $child_translations[ $lang ] ) ) {
+					continue;
+				}
+
+				$child_trans_id = $child_translations[ $lang ]->element_id;
+
+				$relation->update( $translation->element_id, $child_trans_id );
+			}
+
+			add_action( 'jet-engine/relation/update/after', array( $this, 'sync_relations_on_update' ), 10, 4 );
+		}
+
+		public function sync_relations_on_delete( $parent_id, $child_id, $clear_meta, $relation ) {
+
+			$parent_obj_data = jet_engine()->relations->types_helper->type_parts_by_name( $relation->get_args( 'parent_object' ) );
+			$child_obj_data  = jet_engine()->relations->types_helper->type_parts_by_name( $relation->get_args( 'child_object' ) );
+
+			$support_types = array( 'posts', 'terms' );
+
+			if ( ! in_array( $parent_obj_data[0], $support_types ) || ! in_array( $child_obj_data[0], $support_types ) ) {
+				return;
+			}
+
+			if ( ! $this->is_item_translated( $parent_obj_data[1], $parent_obj_data[0] ) ||
+				 ! $this->is_item_translated( $child_obj_data[1], $child_obj_data[0] )
+			) {
+				return;
+			}
+
+			$parent_translations = $this->get_item_translations( $parent_id, $parent_obj_data[1] );
+			$child_translations  = $this->get_item_translations( $child_id, $child_obj_data[1] );
+
+			remove_action( 'jet-engine/relation/delete/after', array( $this, 'sync_relations_on_delete' ) );
+
+			foreach ( $parent_translations as $lang => $translation ) {
+
+				if ( $translation->element_id == $parent_id ) {
+					continue;
+				}
+
+				if ( ! isset( $child_translations[ $lang ] ) ) {
+					continue;
+				}
+
+				$rel_items      = $relation->get_children( $translation->element_id, 'ids' );
+				$child_trans_id = $child_translations[ $lang ]->element_id;
+
+				if ( ! in_array( $child_trans_id, $rel_items ) ) {
+					continue;
+				}
+
+				$relation->delete_rows( $translation->element_id, $child_trans_id );
+			}
+
+			add_action( 'jet-engine/relation/delete/after', array( $this, 'sync_relations_on_delete' ), 10, 4 );
+		}
+
+		public function is_item_translated( $type = null, $obj_type = 'posts' ) {
+
+			switch ( $obj_type ) {
+				case 'posts':
+					$is_translated = is_post_type_translated( $type );
+					break;
+
+				case 'terms':
+					$is_translated = is_taxonomy_translated( $type );
+					break;
+
+				default:
+					$is_translated = false;
+			}
+
+			return $is_translated;
+		}
+
+		public function get_item_translations( $id, $type ) {
+			$elem_type = apply_filters( 'wpml_element_type', $type );
+			$trid      = apply_filters( 'wpml_element_trid', false, $id, $elem_type );
+
+			return apply_filters( 'wpml_get_element_translations', array(), $trid, $elem_type );
+		}
+
 		/**
 		 * Set translated object ID to show
 		 *
-		 * @param int $obj_id
+		 * @param int    $obj_id   Object ID.
+		 * @param string $obj_type Object type: post type or taxonomy slug.
 		 *
 		 * @return int
 		 */
-		public function set_translated_object( $obj_id ) {
+		public function set_translated_object( $obj_id = null, $obj_type = null ) {
 
 			global $sitepress;
 
-			$new_id = $sitepress->get_object_id( $obj_id );
+			if ( empty( $obj_type ) ) {
+				$obj_type = get_post_type( $obj_id );
+			}
+
+			$new_id = $sitepress->get_object_id( $obj_id, $obj_type );
 
 			if ( $new_id ) {
 				return $new_id;
@@ -439,7 +578,6 @@ if ( ! class_exists( 'Jet_Engine_WPML_Package' ) ) {
 		}
 
 		public function set_translated_check_terms( $terms, $tax ) {
-
 			return array_map( function ( $term ) use ( $tax ) {
 				return apply_filters( 'wpml_object_id', $term, $tax, true );
 			}, $terms );

@@ -124,8 +124,8 @@
 							:options-list="getConditionValuesList( conditionIndex )"
 							:value="conditions[ conditionIndex ].value"
 							@input="setConditionProp( conditionIndex, 'value', $event )"
-							:remote="isGlossaryField( conditionIndex )"
-							:remote-callback="getGlossaryFields.bind( this, conditionIndex )"
+							:remote="useRemoteCb( conditionIndex )"
+							:remote-callback="getRemoteFields.bind( this, conditionIndex )"
 							:remote-trigger="2"
 							:conditions="[
 								{
@@ -136,7 +136,7 @@
 								{
 									'input':   conditions[ conditionIndex ].operator,
 									'compare': 'not_in',
-									'value':   [ 'in', 'not_in', '' ],
+									'value':   [ 'in', 'not_in', 'empty', '!empty', '' ],
 								},
 							]"
 						></cx-vui-f-select>
@@ -148,8 +148,8 @@
 							:options-list="getConditionValuesList( conditionIndex )"
 							:value="conditions[ conditionIndex ].values"
 							@input="setConditionProp( conditionIndex, 'values', $event )"
-							:remote="isGlossaryField( conditionIndex )"
-							:remote-callback="getGlossaryFields.bind( this, conditionIndex )"
+							:remote="useRemoteCb( conditionIndex )"
+							:remote-callback="getRemoteFields.bind( this, conditionIndex )"
 							:remote-trigger="2"
 							:conditions="[
 								{

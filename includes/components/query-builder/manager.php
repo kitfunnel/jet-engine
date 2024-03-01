@@ -94,9 +94,15 @@ class Manager extends \Jet_Engine_Base_WP_Intance {
 		$this->init_data();
 
 		add_action( 'jet-engine/rest-api/init-endpoints', array( $this, 'init_rest' ) );
+		add_action( 'jet-engine/meta-boxes/init-options-sources', array( $this, 'init_options_source' ) );
 
 		$this->init_admin_pages();
 
+	}
+
+	public function init_options_source() {
+		require_once $this->component_path( 'meta-fields-options-source.php' );
+		new Meta_Fields_Options_Source();
 	}
 
 	/**
@@ -131,6 +137,7 @@ class Manager extends \Jet_Engine_Base_WP_Intance {
 		require_once $this->component_path( 'rest-api/get-queries.php' );
 		require_once $this->component_path( 'rest-api/search-preview.php' );
 		require_once $this->component_path( 'rest-api/update-preview.php' );
+		require_once $this->component_path( 'rest-api/search-query-field-options.php' );
 
 		$api_manager->register_endpoint( new Rest\Add_Query() );
 		$api_manager->register_endpoint( new Rest\Edit_Query() );
@@ -139,6 +146,7 @@ class Manager extends \Jet_Engine_Base_WP_Intance {
 		$api_manager->register_endpoint( new Rest\Get_Queries() );
 		$api_manager->register_endpoint( new Rest\Search_Preview() );
 		$api_manager->register_endpoint( new Rest\Update_Preview() );
+		$api_manager->register_endpoint( new Rest\Search_Query_Field_Options() );
 
 	}
 
@@ -221,7 +229,9 @@ class Manager extends \Jet_Engine_Base_WP_Intance {
 			return $args;
 		}
 
-		if ( false === strpos( $args['condition_settings']['__dynamic__']['jedv_field'], 'name="jet-query-count"' ) ) {
+		if ( false === strpos( $args['condition_settings']['__dynamic__']['jedv_field'], 'name="jet-query-count"' ) &&
+			 false === strpos( $args['condition_settings']['__dynamic__']['jedv_field'], '"macros":"query_count"' )
+		) {
 			return $args;
 		}
 

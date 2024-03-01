@@ -49,6 +49,18 @@ class Jet_Engine_Calendar_Query {
 
 		$date_values = $render->get_date_period_for_query( $settings );
 
+		if ( 'meta_date' === $group_by ) {
+			$meta_key = esc_attr( $settings['group_by_key'] );
+			$multiday = ! empty( $settings['allow_multiday'] ) ? $settings['allow_multiday'] : false;
+			$end_key  = ! empty( $settings['end_date_key'] ) ? $settings['end_date_key'] : false;
+
+			if ( $meta_key && $multiday && ! $end_key ) {
+				$settings['end_date_key'] = Jet_Engine_Advanced_Date_Field::instance()->data->end_date_field_name(
+					$meta_key
+				);
+			}
+		}
+
 		if ( $render->query_instance ) {
 
 			$query_id        = intval( $render->query_instance->id );

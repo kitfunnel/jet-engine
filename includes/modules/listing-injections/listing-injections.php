@@ -26,6 +26,7 @@ if ( ! class_exists( 'Jet_Engine_Module_Listing_Injections' ) ) {
 		private $static_items_to_print = array();
 		private $static_injections = array();
 		private $static_items_post_ids = array();
+		private $injected_item = false;
 
 		/**
 		 * Module ID
@@ -186,15 +187,34 @@ if ( ! class_exists( 'Jet_Engine_Module_Listing_Injections' ) ) {
 		 */
 		public function maybe_inject_item( $content = false, $post = null, $i = 0, $widget = false, $query = null ) {
 
+			$this->injected_item = false;
+
 			$settings      = $widget->get_settings();
 			$injected_item = $this->get_injected_item( $settings, $post, $i, $widget, count( $query ) );
 
 			if ( ! $injected_item ) {
 				return $content;
 			} else {
+				$this->injected_item = $injected_item;
+				add_filter( 'jet-engine/listing/item-classes', array( $this, 'apply_item_class' ) );
 				return $this->get_injected_item_content( $injected_item, $post );
 			}
 
+		}
+
+		/**
+		 * Add class with injected listing ID to listing classes 
+		 * 
+		 * @param  [type] $classes [description]
+		 * @return [type]          [description]
+		 */
+		public function apply_item_class( $classes ) {
+
+			if ( $this->injected_item ) {
+				$classes[] = 'jet-listing-grid--' . $this->injected_item;
+			}
+
+			return $classes;
 		}
 
 		/**
@@ -1088,6 +1108,8 @@ if ( ! class_exists( 'Jet_Engine_Module_Listing_Injections' ) ) {
 					if ( in_array( $inject_item_id, $css_added ) ) {
 						continue;
 					}
+
+					$inject_item_id = apply_filters( 'jet-engine/compatibility/translate/post', $inject_item_id );
 
 					if ( class_exists( 'Elementor\Core\Files\CSS\Post' ) ) {
 						$css_file = new Elementor\Core\Files\CSS\Post( $inject_item_id );

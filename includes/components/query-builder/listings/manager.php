@@ -46,7 +46,7 @@ class Manager {
 			require_once Query_Manager::instance()->component_path( 'listings/filters-switch-query.php' );
 
 			$this->filters = new Filters();
-			
+
 			new Filters_Options_Source();
 			new Filters_Switch_Query();
 
@@ -109,8 +109,8 @@ class Manager {
 
 		$source = ! empty( $_REQUEST['listing_source'] ) ? esc_attr( $_REQUEST['listing_source'] ) : 'posts';
 
-		if ( $this->source === $source && ! empty( $_REQUEST['query_id'] ) ) {
-			update_post_meta( $listing_id, $this->source_meta, absint( $_REQUEST['query_id'] ) );
+		if ( $this->source === $source && ! empty( $_REQUEST['_query_id'] ) ) {
+			update_post_meta( $listing_id, $this->source_meta, absint( $_REQUEST['_query_id'] ) );
 		}
 
 	}

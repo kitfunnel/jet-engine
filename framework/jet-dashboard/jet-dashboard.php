@@ -2,7 +2,7 @@
 /**
  * Jet Dashboard Module
  *
- * Version: 2.1.5.1
+ * Version: 2.1.7
  */
 
 namespace Jet_Dashboard;
@@ -46,7 +46,7 @@ class Dashboard {
 	 *
 	 * @var string
 	 */
-	protected $version = '2.1.5.1';
+	protected $version = '2.1.7';
 
 	/**
 	 * [$dashboard_slug description]

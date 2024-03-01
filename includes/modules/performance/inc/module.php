@@ -95,12 +95,12 @@ class Module {
 	 * @return [type] [description]
 	 */
 	public function get_default_tweaks_config() {
-		return array(
+		return apply_filters( 'jet-engine/modules/performance/default-tweaks', array(
 			'optimized_dom'          => false,
 			'enable_elementor_views' => true,
 			'enable_blocks_views'    => true,
 			'enable_bricks_views'    => true,
-		);
+		) );
 	}
 
 	/**
@@ -123,14 +123,24 @@ class Module {
 		$to_save = array();
 		$tweaks  = $_REQUEST['tweaks'] ? $_REQUEST['tweaks'] : array();
 
-		foreach ( $this->get_default_tweaks_config() as $tweak => $default ) {
-			$to_save[ $tweak ] = isset( $tweaks[ $tweak ] ) ? filter_var( $tweaks[ $tweak ], FILTER_VALIDATE_BOOLEAN ) : $default;
+		foreach ( $tweaks as $key => $value ) {
+			$tweaks[ $key ] = filter_var( $value, FILTER_VALIDATE_BOOLEAN );
 		}
 
-		update_option( $this->option_slug, $to_save, true );
+		$this->update_tweaks( $tweaks );
 
 		wp_send_json_success( array( 'message' => __( 'Saved!', 'jet-engine' ) ) );
 
+	}
+
+	public function update_tweaks( $tweaks = [] ) {
+
+		foreach ( $this->get_tweaks_config() as $tweak => $default ) {
+			$to_save[ $tweak ] = isset( $tweaks[ $tweak ] ) ? $tweaks[ $tweak ] : $default;
+		}
+
+		update_option( $this->option_slug, $to_save, true );
+		
 	}
 
 	/**

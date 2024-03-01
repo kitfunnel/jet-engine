@@ -140,7 +140,10 @@ if ( ! class_exists( 'Jet_Engine_Module_QR_Code' ) ) {
 			}
 
 			// Convert object ID to object link.
-			if ( ! empty( $args[0] ) && 'object' === $settings['dynamic_field_source'] ) {
+			if ( ! empty( $args[0] ) 
+				&& isset( $settings['dynamic_field_source'] ) 
+				&& 'object' === $settings['dynamic_field_source'] 
+			) {
 
 				switch ( $settings['dynamic_field_post_object'] ) {
 					case 'post_id':

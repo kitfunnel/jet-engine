@@ -47,9 +47,13 @@ class Module {
 		require_once jet_engine()->modules->modules_path( 'data-stores/inc/query.php' );
 		require_once jet_engine()->modules->modules_path( 'data-stores/inc/render-links.php' );
 		require_once jet_engine()->modules->modules_path( 'data-stores/inc/stores/manager.php' );
+		require_once jet_engine()->modules->modules_path( 'data-stores/inc/compatibility.php' );
 
 		// Bricks Integration
 		require jet_engine()->modules->modules_path( 'data-stores/inc/bricks-views/manager.php' );
+
+		// Twig integration
+		require jet_engine()->modules->modules_path( 'data-stores/inc/twig-views/manager.php' );
 
 		$this->data                  = new Data( $this );
 		$this->settings              = new Settings();
@@ -59,8 +63,10 @@ class Module {
 		$this->render                = new Render_Links();
 
 		new Bricks_Views\Manager();
+		new Twig_Views\Manager();
 		new Macros();
 		new Query();
+		new Compatibility();
 
 	}
 

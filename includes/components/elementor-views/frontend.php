@@ -341,6 +341,8 @@ if ( ! class_exists( 'Jet_Engine_Elementor_Frontend' ) ) {
 
 			foreach ( $matches[1] as $listing_id ) {
 
+				$listing_id = apply_filters( 'jet-engine/compatibility/translate/post', $listing_id );
+
 				if ( class_exists( 'Elementor\Core\Files\CSS\Post' ) ) {
 					$css_file = new Elementor\Core\Files\CSS\Post( $listing_id );
 				} else {

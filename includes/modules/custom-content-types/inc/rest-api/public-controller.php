@@ -172,7 +172,7 @@ class Public_Controller {
 				$type = 'array';
 			}
 
-			if ( 'select' === $field['type'] && ! empty( $field['is_multiple'] )
+			if ( in_array( $field['type'], array( 'select', 'posts' ) ) && ! empty( $field['is_multiple'] )
 				 && filter_var( $field['is_multiple'], FILTER_VALIDATE_BOOLEAN )
 			) {
 				$type = 'array';
@@ -483,7 +483,7 @@ class Public_Controller {
 		$id      = $request->get_param( '_ID' );
 		$handler = $content_type->get_item_handler();
 
-		$handler->delete_item( $id );
+		$handler->raw_delete_item( $id );
 
 		return new \WP_REST_Response( array( 'success' => true ), 200 );
 

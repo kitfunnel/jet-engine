@@ -1851,7 +1851,7 @@ registerBlockType( 'jet-engine/listing-grid', {
 								}}
 							/>
 						</PanelBody> }
-						{ ! window.JetEngineListingData.legacy.is_disabled && window.JetEngineListingData.customPanles.listingGrid.length && <React.Fragment>
+						{ ! window.JetEngineListingData.legacy.is_disabled && window.JetEngineListingData.customPanles.listingGrid.length > 0 && <React.Fragment>
 							{ window.JetEngineListingData.customPanles.listingGrid.map( ( Panel ) => {
 								return <Panel
 									attributes={ props.attributes }
@@ -1918,14 +1918,23 @@ registerBlockType( 'jet-engine/listing-grid', {
 										} }
 									/>
 									{ attributes.autoplay &&
-										<TextControl
-											type="number"
-											label={ __( 'Autoplay Speed' ) }
-											value={ attributes.autoplay_speed }
-											onChange={ newValue => {
-												props.setAttributes( { autoplay_speed: newValue } );
-											}}
-										/>
+										<div>
+											<TextControl
+												type="number"
+												label={ __( 'Autoplay Speed' ) }
+												value={ attributes.autoplay_speed }
+												onChange={ newValue => {
+													props.setAttributes( { autoplay_speed: newValue } );
+												}}
+											/>
+											<ToggleControl
+												label={ __( 'Pause On Hover' ) }
+												checked={ attributes.pause_on_hover }
+												onChange={ () => {
+													props.setAttributes( { pause_on_hover: ! attributes.pause_on_hover } );
+												} }
+											/>
+										</div>
 									}
 									<SelectControl
 										label={ __( 'Effect' ) }

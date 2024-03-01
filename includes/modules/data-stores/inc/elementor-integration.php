@@ -219,7 +219,8 @@ class Elementor_Integration {
 		}
 
 		if ( false === strpos( $args['condition_settings']['__dynamic__']['jedv_field'], 'name="jet-data-store-store-count"' ) &&
-			false === strpos( $args['condition_settings']['__dynamic__']['jedv_field'], 'name="jet-data-store-post-count"' )
+			false === strpos( $args['condition_settings']['__dynamic__']['jedv_field'], 'name="jet-data-store-post-count"' ) &&
+			false === strpos( $args['condition_settings']['__dynamic__']['jedv_field'], '"macros":"store_count"' )
 		) {
 			return $args;
 		}

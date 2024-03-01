@@ -9,7 +9,7 @@ class OpenStreetMap extends Base {
 				'q'      => urlencode( $location ),
 				'format' => 'json',
 			),
-			'https://nominatim.openstreetmap.org/search/'
+			'https://nominatim.openstreetmap.org/search'
 		);
 	}
 

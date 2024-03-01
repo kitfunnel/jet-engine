@@ -57,13 +57,6 @@ if ( ! class_exists( 'Jet_Engine_CPT_Tax' ) ) {
 		 */
 		public $meta_fields = array();
 
-		/**
-		 * Meta fields with `save custom` option
-		 *
-		 * @var array
-		 */
-		public $meta_fields_save_custom = array();
-
 		public $edit_links = array();
 
 		/**
@@ -193,7 +186,13 @@ if ( ! class_exists( 'Jet_Engine_CPT_Tax' ) ) {
 								$this->meta_boxes_args[ $tax_slug ]['hide_field_names'] = $new_args['hide_field_names'];
 							}
 
-							$this->meta_boxes[ $tax_slug ] = array_merge( $this->meta_boxes[ $tax_slug ], $meta_fields );
+							$this->meta_boxes_args[ $tax_slug ]['id'] = $built_in['id'];
+							$this->meta_boxes_args[ $tax_slug ]['is_built_in'] = true;
+
+							$this->meta_boxes[ $tax_slug ] = array_merge( 
+								$this->meta_boxes[ $tax_slug ], 
+								$meta_fields 
+							);
 
 							if ( jet_engine()->meta_boxes ) {
 								jet_engine()->meta_boxes->store_fields( $tax_slug, $meta_fields, 'taxonomy' );
@@ -313,6 +312,8 @@ if ( ! class_exists( 'Jet_Engine_CPT_Tax' ) ) {
 						$this->meta_boxes_args[ $tax['slug'] ]['hide_field_names'] = $tax['hide_field_names'];
 					}
 
+					$this->meta_boxes_args[ $tax['slug'] ]['id'] = $tax['id'];
+
 					$this->meta_boxes[ $tax['slug'] ] = $tax['meta_fields'];
 
 					if ( jet_engine()->meta_boxes ) {
@@ -430,9 +431,17 @@ if ( ! class_exists( 'Jet_Engine_CPT_Tax' ) ) {
 
 			foreach ( $this->meta_boxes as $tax => $meta_box ) {
 
-				$this->find_meta_fields_with_save_custom( $tax, $meta_box );
-
 				$args = ! empty( $this->meta_boxes_args[ $tax ] ) ? $this->meta_boxes_args[ $tax ] : array();
+				$is_built_in = isset( $args['is_built_in'] ) ? $args['is_built_in'] : false;
+
+				Jet_Engine_Meta_Boxes_Option_Sources::instance()->find_meta_fields_with_save_custom( 
+					'taxonomy',
+					$tax,
+					$meta_box,
+					$args['id'],
+					$this->data,
+					$is_built_in
+				);
 
 				$meta_instance = new Jet_Engine_CPT_Tax_Meta( $tax, $meta_box, $args );
 
@@ -441,122 +450,6 @@ if ( ! class_exists( 'Jet_Engine_CPT_Tax' ) ) {
 				}
 			}
 
-			$this->add_hooks_to_save_custom_values();
-
-		}
-
-		/**
-		 * Find meta fields with enabling `save custom` option
-		 *
-		 * @param $tax
-		 * @param $fields
-		 */
-		public function find_meta_fields_with_save_custom( $tax, $fields ) {
-
-			foreach ( $fields as $field ) {
-
-				$object_type = ! empty( $field['object_type'] ) ? $field['object_type'] : 'field';
-
-				if ( 'field' !== $object_type || ! in_array( $field['type'], array( 'checkbox', 'radio' ) ) ) {
-					continue;
-				}
-
-				$allow_custom = ! empty( $field['allow_custom'] ) && filter_var( $field['allow_custom'], FILTER_VALIDATE_BOOLEAN );
-				$save_custom  = ! empty( $field['save_custom'] ) && filter_var( $field['save_custom'], FILTER_VALIDATE_BOOLEAN );
-
-				if ( ! $allow_custom || ! $save_custom ) {
-					continue;
-				}
-
-				if ( empty( $this->meta_fields_save_custom[ $tax ] ) ) {
-					$this->meta_fields_save_custom[ $tax ] = array();
-				}
-
-				$this->meta_fields_save_custom[ $tax ][ $field['name'] ] = $field;
-			}
-
-		}
-
-		/**
-		 * Add hooks to save custom values
-		 */
-		public function add_hooks_to_save_custom_values() {
-
-			if ( empty( $this->meta_fields_save_custom ) ) {
-				return;
-			}
-
-			foreach ( $this->meta_fields_save_custom as $tax => $fields ) {
-				add_action( "created_{$tax}", array( $this, 'save_custom_values' ) );
-				add_action( "edited_{$tax}",  array( $this, 'save_custom_values' ) );
-			}
-		}
-
-		/**
-		 * Save custom values
-		 *
-		 * @param $id Term ID
-		 */
-		public function save_custom_values( $id ) {
-
-			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-				return;
-			}
-
-			if ( empty( $_POST ) ) {
-				return;
-			}
-
-			if ( false !== strpos( current_action(), 'created_' ) ) {
-				if ( ! isset( $_POST['_wpnonce_add-tag'] ) ) {
-					return;
-				}
-			} else {
-				if ( ! isset( $_POST['_wpnonce'] ) ) {
-					return;
-				}
-			}
-
-			if ( ! current_user_can( 'edit_term', $id ) ) {
-				return;
-			}
-
-			$tax = $_POST['taxonomy'];
-
-			$item = $this->data->db->query(
-				$this->data->table,
-				array(
-					'slug' => $tax,
-				)
-			);
-
-			if ( empty( $item ) ) {
-				return;
-			}
-
-			$item        = $item[0];
-			$meta_fields = maybe_unserialize( $item['meta_fields'] );
-			$update_meta = false;
-
-			foreach ( $this->meta_fields_save_custom[ $tax ] as $field => $field_args ) {
-				if ( ! isset( $_POST[ $field ] ) || '' === $_POST[ $field ] ) {
-					continue;
-				}
-
-				do_action( 'jet-engine/meta-boxes/save-custom-value', $field, $field_args );
-
-				$_meta_fields = jet_engine()->meta_boxes->maybe_add_custom_values_to_options( $meta_fields, $field, $field_args );
-
-				if ( $_meta_fields ) {
-					$meta_fields = $_meta_fields;
-					$update_meta = true;
-				}
-			}
-
-			if ( $update_meta ) {
-				$item['meta_fields'] = maybe_serialize( $meta_fields );
-				$this->data->update_item_in_db( $item );
-			}
 		}
 
 		/**

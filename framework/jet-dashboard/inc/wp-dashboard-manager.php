@@ -439,9 +439,9 @@ class WP_Dashboard_Manager {
 	 */
 	public function is_jet_options_page( $item_data ) {
 
-		if ( ! str_contains( $item_data[2], '-options-page' ) ) {
-			return false;
-		}
+//		if ( ! str_contains( $item_data[2], '-options-page' ) ) {
+//			return false;
+//		}
 
 		$allowed_options_pages = $this->get_allowed_options_pages();
 

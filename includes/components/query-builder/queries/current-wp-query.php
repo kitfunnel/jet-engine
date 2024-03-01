@@ -228,6 +228,8 @@ class Current_WP_Query extends Posts_Query {
 
 				break;
 
+			/*
+			 * This code not needed anymore, because the `post__not_in` prop need merged.
 			case 'post__not_in':
 
 				if ( ! empty( $this->final_query['post__not_in'] ) ) {
@@ -242,6 +244,7 @@ class Current_WP_Query extends Posts_Query {
 				}
 
 				break;
+			*/
 
 			default:
 				$this->merge_default_props( $prop, $value );

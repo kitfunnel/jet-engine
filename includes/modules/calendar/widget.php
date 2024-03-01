@@ -137,7 +137,7 @@ if ( ! class_exists( 'Elementor\Jet_Listing_Calendar_Widget' ) ) {
 					'type'        => Controls_Manager::TEXT,
 					'default'     => '',
 					'label_block' => true,
-					'description' => __( 'This field must contain date when events ends. Works only if "Save as timestamp" option for meta field is active', 'jet-engine' ),
+					'description' => __( 'If you used "Advanced Datetime" meta field type you can leave this field empty. This field must contain date when events ends. Works only if "Save as timestamp" option for meta field is active.', 'jet-engine' ),
 					'condition'   => array(
 						'group_by'       => 'meta_date',
 						'allow_multiday' => 'yes',

@@ -110,7 +110,7 @@ if ( ! class_exists( 'Jet_Engine_Options_Page_Factory' ) ) {
 				$this->page['position'] = null;
 			}
 
-			add_action( 'admin_menu', array( $this, 'register_menu_page' ) );
+			add_action( 'admin_menu', array( $this, 'register_menu_page' ), 99 );
 
 			if ( $this->is_page_now() ) {
 				add_action( 'admin_enqueue_scripts', array( $this, 'init_builder' ), 0 );
@@ -191,6 +191,16 @@ if ( ! class_exists( 'Jet_Engine_Options_Page_Factory' ) ) {
 
 			$this->update_options( $_REQUEST );
 
+			/**
+			 * Global hook fires after saving options of the page
+			 */
+			do_action( 'jet-engine/options-pages/after-save', $this );
+
+			/**
+			 * Page-specific hook fires after saving options of the page
+			 */
+			do_action( 'jet-engine/options-pages/after-save/' . $this->page['slug'], $this );
+
 			$redirect = add_query_arg(
 				array(
 					'page'         => $this->slug,
@@ -253,6 +263,23 @@ if ( ! class_exists( 'Jet_Engine_Options_Page_Factory' ) ) {
 			if ( 'default' === $this->storage_type && isset( $current ) ) {
 				update_option( $this->slug, $current );
 			}
+
+			/**
+			 * Fires after the values of a specific options page has been successfully updated.
+			 * The dynamic portion of the hook name, `$slug`, refers to the slug of options page.
+			 *
+			 * @since 3.2.7
+			 * @param Jet_Engine_Options_Page_Factory $page The options page instance.
+			 */
+			do_action( 'jet-engine/options-pages/updated/' . $this->slug, $this );
+
+			/**
+			 * Fires after the values of an options page has been successfully updated.
+			 *
+			 * @since 3.2.7
+			 * @param Jet_Engine_Options_Page_Factory $page The options page instance.
+			 */
+			do_action( 'jet-engine/options-pages/updated', $this );
 		}
 
 		/**

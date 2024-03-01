@@ -209,6 +209,20 @@ class CCT_Maps_Source extends \Jet_Engine\Modules\Maps_Listings\Source\Base {
 				}
 
 			}, 10, 3 );
+
+			// Prevent deletions address columns after updated CCT.
+			$col_prefix = implode( '_', $fields );
+
+			$cols = array(
+				$col_prefix . '_hash',
+				$col_prefix . '_lat',
+				$col_prefix . '_lng'
+			);
+
+			add_filter( 'jet-engine/custom-content-types/db/exclude-fields', function ( $exclude ) use ( $cols ) {
+				return array_merge( $exclude, $cols );
+			} );
+
 		}
 	}
 

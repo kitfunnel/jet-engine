@@ -129,7 +129,9 @@ class Jet_Action extends Base {
 			) )->dynamic_error();
 		}
 
-		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		$code = (int) wp_remote_retrieve_response_code( $response );
+
+		if ( 400 <= $code ) {
 			throw ( new Action_Exception(
 				$error_prefix . wp_remote_retrieve_response_message( $response )
 			) )->dynamic_error();

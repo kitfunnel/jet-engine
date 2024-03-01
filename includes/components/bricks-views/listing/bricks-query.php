@@ -23,7 +23,7 @@ class Bricks_Query extends \Bricks\Query {
 		$this->object_type  = 'jet-engine-query';
 		$this->settings     = ! empty( $element['settings'] ) ? $element['settings'] : [];
 		$this->query_result = [];
-		$this->is_looping   = false;
+		$this->is_looping   = true;
 
 	}
 

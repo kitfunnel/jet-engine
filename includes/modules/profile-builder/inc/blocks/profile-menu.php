@@ -63,6 +63,14 @@ class Profile_Menu extends \Jet_Engine_Blocks_Views_Type_Base {
 		$add_main_slug = ! empty( $attributes['add_main_slug'] ) ? $attributes['add_main_slug'] : false;
 		$add_main_slug = filter_var( $add_main_slug, FILTER_VALIDATE_BOOLEAN );
 
+		// For preview in Editor.
+		if ( $this->is_edit_mode() ) {
+			remove_filter(
+				'jet-engine/profile-builder/render/profile-menu-items',
+				array( Module::instance()->frontend->menu, 'filter_menu_items' )
+			);
+		}
+
 		ob_start();
 
 		Module::instance()->frontend->profile_menu( array(

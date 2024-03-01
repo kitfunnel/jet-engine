@@ -51,8 +51,13 @@ class Package {
 	}
 
 	public function register_macros() {
+
 		require_once $this->package_path( 'macros/products-in-cart.php' );
+		require_once $this->package_path( 'macros/purchased-products.php' );
+
 		new Macros\Products_In_Cart();
+		new Macros\Purchased_Products();
+
 	}
 
 	/**
@@ -97,6 +102,7 @@ class Package {
 		require_once $this->package_path( 'conditions/is-on-backorder.php' );
 		require_once $this->package_path( 'conditions/is-on-sale.php' );
 		require_once $this->package_path( 'conditions/is-purchasable.php' );
+		require_once $this->package_path( 'conditions/is-purchased.php' );
 		require_once $this->package_path( 'conditions/is-sold-individually.php' );
 		require_once $this->package_path( 'conditions/is-type.php' );
 		require_once $this->package_path( 'conditions/is-virtual.php' );
@@ -108,6 +114,7 @@ class Package {
 		$conditions_manager->register_condition( new Conditions\Is_On_Backorder() );
 		$conditions_manager->register_condition( new Conditions\Is_On_Sale() );
 		$conditions_manager->register_condition( new Conditions\Is_Purchasable() );
+		$conditions_manager->register_condition( new Conditions\Is_Purchased() );
 		$conditions_manager->register_condition( new Conditions\Is_Sold_Individually() );
 		$conditions_manager->register_condition( new Conditions\Is_Type() );
 		$conditions_manager->register_condition( new Conditions\Is_Virtual() );

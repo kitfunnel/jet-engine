@@ -29,6 +29,7 @@ class Get_Map_Autocomplete_Data extends \Jet_Engine_Base_API_Endpoint {
 			return rest_ensure_response( array(
 				'success' => false,
 				'html'    => __( 'Required parameters is not found in request', 'jet-engine' ),
+				'data'    => [],
 			) );
 		}
 
@@ -39,15 +40,36 @@ class Get_Map_Autocomplete_Data extends \Jet_Engine_Base_API_Endpoint {
 			return rest_ensure_response( array(
 				'success' => false,
 				'html'    => __( 'Required parameters is not found in request', 'jet-engine' ),
+				'data'    => [],
 			) );
 		}
 
 		$data = $geocode_provider->get_autocomplete_data( $query );
 
+		if ( preg_match( '/^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/', $query, $matches ) ) {
+
+			if ( empty( $data ) ) {
+				$data = array();
+			}
+			
+			$lat = trim( $matches[1] );
+			$lng = trim( $matches[2] );
+			
+			if ( absint( $lat ) <= 90 && absint( $lng ) <= 180 ) {
+				array_unshift( $data, array(
+					'address' => $query,
+					'lat'     => $lat,
+					'lng'     => $lng,
+				) );	
+			}
+
+		}
+
 		if ( empty( $data ) ) {
 			return rest_ensure_response( array(
 				'success' => false,
 				'html'    => __( 'No Results Found', 'jet-engine' ),
+				'data'    => [],
 			) );
 		}
 
@@ -75,7 +97,8 @@ class Get_Map_Autocomplete_Data extends \Jet_Engine_Base_API_Endpoint {
 	 * @return bool
 	 */
 	public function permission_callback( $request ) {
-		return current_user_can( 'edit_posts' );
+		return true;
+		//return current_user_can( 'edit_posts' );
 	}
 
 	/**

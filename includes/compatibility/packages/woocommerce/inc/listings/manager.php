@@ -39,6 +39,13 @@ class Manager {
 			[ $this, 'add_link_source_fields' ]
 		);
 
+		// Works the same as prev, but placed only where only plain URL allowed to return
+		add_filter(
+			'jet-engine/listings/dynamic-link/fields/common',
+			[ $this, 'add_link_source_fields' ],
+			10, 3
+		);
+
 		add_filter(
 			'jet-engine/listings/dynamic-image/fields',
 			[ $this, 'add_image_source_fields' ],
@@ -145,6 +152,20 @@ class Manager {
 		);
 
 		add_filter(
+			'jet-engine/listings/dynamic-link/custom-url',
+			[ $this, 'maybe_set_custom_url' ],
+			10, 2
+		);
+
+		add_filter(
+			'jet-engine/twig-views/functions/dynamic-url/controls',
+			function( $controls ) {
+				$controls['size']['condition']['source'][] = 'get_product_image_url';
+				return $controls;
+			}
+		);
+
+		add_filter(
 			'acf/pre_load_post_id',
 			[ $this, 'set_wc_queried_product_id' ],
 			10, 2
@@ -215,6 +236,64 @@ class Manager {
 	}
 
 	/**
+	 * Return only URL of add to cart link or WC product image, not whole HTMl
+	 *
+	 * This callback used where we need only plain URL, for example Twig templates
+	 * 
+	 * @param  bool|string $result   [description]
+	 * @param  array  $settings [description]
+	 * @return bool|string
+	 */
+	public function maybe_set_custom_url( $result = false, $settings = [] ) {
+
+		$source = ! empty( $settings['dynamic_link_source'] ) ? $settings['dynamic_link_source'] : '_permalink';
+
+		if ( ! in_array( $source, [ 'add_to_cart', 'get_product_image_url' ] ) ) {
+			return $result;
+		}
+
+		global $product;
+
+		if ( is_null( $product ) ) {
+			$product = jet_engine()->listings->data->get_current_object();
+		}
+
+		// If product is not found - abort early
+		if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+			return $result;
+		}
+
+		switch ( $source ) {
+			case 'add_to_cart':
+				return esc_url( $product->add_to_cart_url() );
+			
+			case 'get_product_image_url':
+
+				$image_url = '';
+				$size      = ! empty( $settings['size'] ) ? $settings['size'] : 'full';
+
+				if ( $product->get_image_id() ) {
+					$image_url = wp_get_attachment_image_url( $product->get_image_id(), $size );
+				} elseif ( $product->get_parent_id() ) {
+					$parent_product = wc_get_product( $product->get_parent_id() );
+					if ( $parent_product && $parent_product->get_image_id() ) {
+						$image_url = wp_get_attachment_image_url( $parent_product->get_image_id(), $size );
+					}
+				}
+
+				if ( ! $image_url ) {
+					$image_url = wc_placeholder_img_src( $size );
+				}
+				
+				return $image_url;
+		}
+
+		// Just in case
+		return $result;
+
+	}
+
+	/**
 	 * Add to cart link.
 	 *
 	 * Returns dynamic link with WooCommerce add to cart functionality.
@@ -232,10 +311,17 @@ class Manager {
 	 */
 	public function add_to_cart_link( $result, $settings, $base_class, $render ) {
 
-		global $product;
+		$current_object = jet_engine()->listings->data->get_current_object();
 
-		if ( is_null( $product ) ) {
-			$product = jet_engine()->listings->data->get_current_object();
+		if ( ! isset( $current_object ) ) {
+			return false;
+		}
+
+		$product = $this->maybe_convert_object_to_wc_product( $current_object );
+
+		if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+			$object_context = ! empty( $settings['object_context'] ) ? $settings['object_context'] : false;
+			$product        = wc_get_product( jet_engine()->listings->data->get_object_by_context( $object_context ) );
 		}
 
 		if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
@@ -494,13 +580,19 @@ class Manager {
 	 *
 	 * @return mixed
 	 */
-	public function add_link_source_fields( $groups ) {
+	public function add_link_source_fields( $groups, $for = 'plain', $is_common = false ) {
+
+		$options = [
+			'get_permalink' => __( 'Permalink', 'jet-engine' ),
+		];
+
+		if ( $is_common ) {
+			$options['get_product_image_url'] = __( 'Product Image URL', 'jet-engine' );
+		}
 
 		$groups[] = [
 			'label'   => __( 'WooCommerce', 'jet-engine' ),
-			'options' => apply_filters( 'jet-engine/listings/dynamic-link/woocommerce-options', [
-				'get_permalink' => __( 'Permalink', 'jet-engine' ),
-			] ),
+			'options' => apply_filters( 'jet-engine/listings/dynamic-link/woocommerce-options', $options ),
 		];
 
 		return $groups;
@@ -672,6 +764,11 @@ class Manager {
 		}
 
 		$_product = $this->maybe_convert_object_to_wc_product( $current_object );
+
+		if ( ! $_product || ! is_a( $_product, 'WC_Product' ) ) {
+			$object_context = ! empty( $settings['object_context'] ) ? $settings['object_context'] : false;
+			$_product       = wc_get_product( jet_engine()->listings->data->get_object_by_context( $object_context ) );
+		}
 
 		if ( is_callable( [ $_product, $link ] ) ) {
 			$result = call_user_func( [ $_product, $link ] );

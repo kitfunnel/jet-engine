@@ -16,6 +16,7 @@ class Manager {
 		add_filter( 'bricks/query/run', [ $this, 'run_query' ], 10, 2 );
 		add_filter( 'bricks/query/loop_object', [ $this, 'set_loop_object' ], 10, 3 );
 		add_action( 'bricks/query/after_loop', [ $this, 'set_initial_object' ], 10, 2 );
+		add_filter( 'jet-engine/listings/data/the-post/is-main-query', array( $this, 'maybe_modify_is_main_query' ), 10, 3 );
 	}
 
 	public function setup_query_controls( $control_options ) {
@@ -164,5 +165,24 @@ class Manager {
 		// Get the query object from JetEngine based on the query id
 		return $query_builder->get_query_by_id( $jet_engine_query_builder_id );
 
+	}
+
+	/**
+	 * Modify the main query under certain conditions.
+	 *
+	 * @param bool   $is_main_query  Whether the query is the main query.
+	 * @param object $post           The current post object.
+	 * @param object $query          The current WP_Query object.
+	 *
+	 * @return bool  Modified value for $is_main_query.
+	 */
+	public function maybe_modify_is_main_query( $is_main_query, $post, $query ) {
+		$content_type = Database::$active_templates['content_type'] ?? '';
+
+		if ( $is_main_query && $content_type === 'archive' ) {
+			return ! $is_main_query;
+		}
+
+		return $is_main_query;
 	}
 }

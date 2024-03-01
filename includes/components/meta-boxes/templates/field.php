@@ -159,11 +159,13 @@
 		], 'save_custom' )"
 		@input="setFieldProp( 'save_custom', $event )"
 	></cx-vui-switcher>
-	<cx-vui-switcher
-		label="<?php _e( 'Get options from the glossary', 'jet-engine' ); ?>"
-		description="<?php _e( 'Automatically get options for this field from the existing glossary', 'jet-engine' ); ?>"
+	<cx-vui-select
+		label="<?php _e( 'Source', 'jet-engine' ); ?>"
+		description="<?php _e( 'Select source to get field options from', 'jet-engine' ); ?>"
 		:wrapper-css="[ 'equalwidth' ]"
-		:value="field.options_from_glossary"
+		size="fullwidth"
+		:options-list="allowedSources"
+		:value="field.options_source"
 		:conditions="getFilteredFieldConditions( [
 			{
 				'input':   field.type,
@@ -175,9 +177,9 @@
 				'compare': 'equal',
 				'value':   'field',
 			},
-		], 'options_from_glossary' )"
-		@input="setFieldProp( 'options_from_glossary', $event )"
-	></cx-vui-switcher>
+		], 'options_source' )"
+		@input="setFieldProp( 'options_source', $event )"
+	></cx-vui-select>
 	<cx-vui-select
 		label="<?php _e( 'Glossary', 'jet-engine' ); ?>"
 		description="<?php _e( 'Select exact glossary to get options from', 'jet-engine' ); ?>"
@@ -197,13 +199,118 @@
 				'value':   'field',
 			},
 			{
-				'input':   field.options_from_glossary,
+				'input':   field.options_source,
 				'compare': 'equal',
-				'value':   true,
+				'value':   'glossary',
 			},
 		], 'glossary_id' )"
 		@input="setFieldProp( 'glossary_id', $event )"
 	></cx-vui-select>
+	<cx-vui-select
+		label="<?php _e( 'Query', 'jet-engine' ); ?>"
+		description="<?php _e( 'Select exact query to get options from', 'jet-engine' ); ?>"
+		:wrapper-css="[ 'equalwidth' ]"
+		size="fullwidth"
+		:options-list="queriesList"
+		:value="field.query_id"
+		:conditions="getFilteredFieldConditions( [
+			{
+				'input':   field.type,
+				'compare': 'in',
+				'value':   [ 'checkbox', 'radio', 'select' ],
+			},
+			{
+				'input':   field.object_type,
+				'compare': 'equal',
+				'value':   'field',
+			},
+			{
+				'input':   field.options_source,
+				'compare': 'equal',
+				'value':   'query',
+			},
+		], 'query_id' )"
+		@input="setFieldProp( 'query_id', $event )"
+	></cx-vui-select>
+	<cx-vui-input
+		label="<?php _e( 'Value Field', 'jet-engine' ); ?>"
+		description="<?php _e( 'Query result field to use as option value. If empty, we`ll try to use most obvious value. For example ID for posts.', 'jet-engine' ); ?>"
+		:wrapper-css="[ 'equalwidth' ]"
+		size="fullwidth"
+		:value="field.query_value_field"
+		@input="setFieldProp( 'query_value_field', $event )"
+		:conditions="getFilteredFieldConditions( [
+			{
+				'input':   field.type,
+				'compare': 'in',
+				'value':   [ 'checkbox', 'radio', 'select' ],
+			},
+			{
+				'input':   field.object_type,
+				'compare': 'equal',
+				'value':   'field',
+			},
+			{
+				'input':   field.options_source,
+				'compare': 'equal',
+				'value':   'query',
+			},
+		], 'query_value_field' )"
+	></cx-vui-input>
+	<cx-vui-input
+		label="<?php _e( 'Label Field', 'jet-engine' ); ?>"
+		description="<?php _e( 'Query result field to use as option label. If empty, we`ll try to use most obvious value. For example post_title for posts.', 'jet-engine' ); ?>"
+		:wrapper-css="[ 'equalwidth' ]"
+		size="fullwidth"
+		:value="field.query_label_field"
+		@input="setFieldProp( 'query_label_field', $event )"
+		:conditions="getFilteredFieldConditions( [
+			{
+				'input':   field.type,
+				'compare': 'in',
+				'value':   [ 'checkbox', 'radio', 'select' ],
+			},
+			{
+				'input':   field.object_type,
+				'compare': 'equal',
+				'value':   'field',
+			},
+			{
+				'input':   field.options_source,
+				'compare': 'equal',
+				'value':   'query',
+			},
+		], 'query_label_field' )"
+	></cx-vui-input>
+	<cx-vui-textarea
+		label="<?php _e( 'Bulk Options', 'jet-engine' ); ?>"
+		description="<?php _e( 'One option per line. Allowed formats:<br>
+			<i>value</i> - value and label will be the same<br>
+			<i>value::label</i> - separate value and label<br>
+			<i>value::label::checked</i> - separate value and label, checked by default', 'jet-engine' ); ?>"
+		:wrapper-css="[ 'equalwidth' ]"
+		size="fullwidth"
+		:rows="Number(8)"
+		:value="field.bulk_options"
+		@input="setFieldProp( 'bulk_options', $event )"
+		:conditions="getFilteredFieldConditions( [
+			{
+				'input':   field.type,
+				'compare': 'in',
+				'value':   [ 'checkbox', 'radio', 'select' ],
+			},
+			{
+				'input':   field.object_type,
+				'compare': 'equal',
+				'value':   'field',
+			},
+			{
+				'input':   field.options_source,
+				'compare': 'equal',
+				'value':   'manual_bulk',
+			},
+		], 'bulk_options' )"
+	></cx-vui-textarea>
 	<cx-vui-component-wrapper
 		:wrapper-css="[ 'fullwidth-control' ]"
 		:conditions="getFilteredFieldConditions( [
@@ -213,9 +320,9 @@
 				'value':    [ 'checkbox', 'select', 'radio' ],
 			},
 			{
-				'input':   field.options_from_glossary,
-				'compare': 'not_equal',
-				'value':   true,
+				'input':   field.options_source,
+				'compare': 'equal',
+				'value':   'manual',
 			},
 			{
 				'input':    field.object_type,
@@ -543,11 +650,14 @@
 						:value="field['repeater-fields'][ rFieldIndex ].type"
 						@input="setRepeaterFieldProp( rFieldIndex, 'type', $event )"
 					></cx-vui-select>
-					<cx-vui-switcher
-						label="<?php _e( 'Get options from the glossary', 'jet-engine' ); ?>"
-						description="<?php _e( 'Automatically get options for this field from the existing glossary', 'jet-engine' ); ?>"
+					<cx-vui-select
+						label="<?php _e( 'Source', 'jet-engine' ); ?>"
+						description="<?php _e( 'Select source to get field options from', 'jet-engine' ); ?>"
 						:wrapper-css="[ 'equalwidth' ]"
-						v-model="field['repeater-fields'][ rFieldIndex ].options_from_glossary"
+						size="fullwidth"
+						:options-list="allowedSources"
+						:value="field['repeater-fields'][ rFieldIndex ].options_source"
+						@input="setRepeaterFieldProp( rFieldIndex, 'options_source', $event )"
 						:conditions="[
 							{
 								'input':   field['repeater-fields'][ rFieldIndex ].type,
@@ -555,7 +665,7 @@
 								'value':    [ 'checkbox', 'select', 'radio' ],
 							}
 						]"
-					></cx-vui-switcher>
+					></cx-vui-select>
 					<cx-vui-select
 						label="<?php _e( 'Glossary', 'jet-engine' ); ?>"
 						description="<?php _e( 'Select exact glossary to get options from', 'jet-engine' ); ?>"
@@ -570,12 +680,93 @@
 								'value':    [ 'checkbox', 'select', 'radio' ],
 							},
 							{
-								'input':   field['repeater-fields'][ rFieldIndex ].options_from_glossary,
+								'input':   field['repeater-fields'][ rFieldIndex ].options_source,
 								'compare': 'equal',
-								'value':   true,
+								'value':   'glossary',
 							}
 						]"
 					></cx-vui-select>
+					<cx-vui-select
+						label="<?php _e( 'Query', 'jet-engine' ); ?>"
+						description="<?php _e( 'Select exact query to get options from', 'jet-engine' ); ?>"
+						:wrapper-css="[ 'equalwidth' ]"
+						size="fullwidth"
+						:options-list="queriesList"
+						v-model="field['repeater-fields'][ rFieldIndex ].query_id"
+						:conditions="[
+							{
+								'input':   field['repeater-fields'][ rFieldIndex ].type,
+								'compare': 'in',
+								'value':   [ 'checkbox', 'radio', 'select' ],
+							},
+							{
+								'input':   field['repeater-fields'][ rFieldIndex ].options_source,
+								'compare': 'equal',
+								'value':   'query',
+							},
+						]"
+					></cx-vui-select>
+					<cx-vui-input
+						label="<?php _e( 'Value Field', 'jet-engine' ); ?>"
+						description="<?php _e( 'Query result field to use as option value. If empty, we`ll try to use most obvious value. For example ID for posts.', 'jet-engine' ); ?>"
+						:wrapper-css="[ 'equalwidth' ]"
+						size="fullwidth"
+						v-model="field['repeater-fields'][ rFieldIndex ].query_value_field"
+						:conditions="getFilteredFieldConditions( [
+							{
+								'input':   field['repeater-fields'][ rFieldIndex ].type,
+								'compare': 'in',
+								'value':   [ 'checkbox', 'radio', 'select' ],
+							},
+							{
+								'input':   field['repeater-fields'][ rFieldIndex ].options_source,
+								'compare': 'equal',
+								'value':   'query',
+							},
+						], 'query_value_field' )"
+					></cx-vui-input>
+					<cx-vui-input
+						label="<?php _e( 'Label Field', 'jet-engine' ); ?>"
+						description="<?php _e( 'Query result field to use as option label. If empty, we`ll try to use most obvious value. For example post_title for posts.', 'jet-engine' ); ?>"
+						:wrapper-css="[ 'equalwidth' ]"
+						size="fullwidth"
+						v-model="field['repeater-fields'][ rFieldIndex ].query_label_field"
+						:conditions="getFilteredFieldConditions( [
+							{
+								'input':   field['repeater-fields'][ rFieldIndex ].type,
+								'compare': 'in',
+								'value':   [ 'checkbox', 'radio', 'select' ],
+							},
+							{
+								'input':   field['repeater-fields'][ rFieldIndex ].options_source,
+								'compare': 'equal',
+								'value':   'query',
+							},
+						], 'query_label_field' )"
+					></cx-vui-input>
+					<cx-vui-textarea
+						label="<?php _e( 'Bulk Options', 'jet-engine' ); ?>"
+						description="<?php _e( 'One option per line. Allowed formats:<br>
+							<i>value</i> - value and label will be the same<br>
+							<i>value::label</i> - separate value and label<br>
+							<i>value::label::checked</i> - separate value and label, checked by default', 'jet-engine' ); ?>"
+						:wrapper-css="[ 'equalwidth' ]"
+						size="fullwidth"
+						:rows="Number(8)"
+						v-model="field['repeater-fields'][ rFieldIndex ].bulk_options"
+						:conditions="getFilteredFieldConditions( [
+							{
+								'input':   field['repeater-fields'][ rFieldIndex ].type,
+								'compare': 'in',
+								'value':   [ 'checkbox', 'radio', 'select' ],
+							},
+							{
+								'input':   field['repeater-fields'][ rFieldIndex ].options_source,
+								'compare': 'equal',
+								'value':   'manual_bulk',
+							},
+						], 'bulk_options' )"
+					></cx-vui-textarea>
 					<cx-vui-component-wrapper
 						:wrapper-css="[ 'fullwidth-control' ]"
 						:conditions="[
@@ -585,9 +776,9 @@
 								'value':    [ 'checkbox', 'select', 'radio' ],
 							},
 							{
-								'input':   field['repeater-fields'][ rFieldIndex ].options_from_glossary,
-								'compare': 'not_equal',
-								'value':   true,
+								'input':   field['repeater-fields'][ rFieldIndex ].options_source,
+								'compare': 'equal',
+								'value':   'manual',
 							},
 						]"
 					>
@@ -996,7 +1187,7 @@
 			{
 				'input':    field.type,
 				'compare': 'in',
-				'value':    [ 'text', 'date', 'textarea', 'iconpicker', 'wysiwyg', 'number' ],
+				'value':    [ 'text', 'date', 'textarea', 'iconpicker', 'wysiwyg', 'number', 'colorpicker' ],
 			},
 			{
 				'input':    'default_val',

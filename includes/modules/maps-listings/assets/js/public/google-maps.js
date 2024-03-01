@@ -562,6 +562,13 @@ JetGMInfoBox.prototype.contentIsSet = function () {
  * @param {string|Node} content
  */
 JetGMInfoBox.prototype.setContent = function (content) {
+	// Convert a content to an HTMLElement to store the HTML manipulation in a popup
+	if ( typeof content.nodeType === 'undefined' ) {
+		let contentHtml = document.createElement( 'div' );
+		contentHtml.innerHTML = content;
+		content = contentHtml;
+	}
+
 	this.content_ = content;
 
 	if (this.div_) {
@@ -830,6 +837,10 @@ JetGMInfoBox.prototype.close = function () {
 
 window.JetEngineMapsProvider = function() {
 
+	this.getId = function() {
+		return 'google';
+	}
+
 	this.initMap = function( container, settings ) {
 
 		settings = settings || {};
@@ -934,10 +945,25 @@ window.JetEngineMapsProvider = function() {
 	}
 
 	this.getMarkerCluster = function( data ) {
+		let options = {
+			imagePath: data.clustererImg,
+		};
+
+		const optionsMap = {
+			maxZoom: 'clusterMaxZoom',
+			gridSize: 'clusterRadius',
+		};
+
+		for ( const [ optionKey, settingsKey ] of Object.entries( optionsMap ) ) {
+			if ( undefined !== data[ settingsKey ] && '' !== data[ settingsKey ]  ) {
+				options[ optionKey ] = data[ settingsKey ];
+			}
+		}
+
 		return new MarkerClusterer(
 			data.map,
 			data.markers,
-			{ imagePath: data.clustererImg }
+			options
 		);
 	}
 

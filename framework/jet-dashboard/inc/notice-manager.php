@@ -122,7 +122,7 @@ class Notice_Manager
 			return false;
 		}
 
-		if ( !is_array( $notice_args['page'] ) ) {
+		if ( ! is_array( $notice_args['page'] ) ) {
 			$pages[] = $notice_args['page'];
 			$notice_args['page'] = $pages;
 		}

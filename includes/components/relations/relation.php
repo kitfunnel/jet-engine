@@ -413,7 +413,19 @@ class Relation {
 					$field_data['description'] = wp_strip_all_tags( $field_data['description'] );
 				}
 
+				if ( ! empty( $field_data['options_callback'] )
+					&& is_callable( $field_data['options_callback'] ) 
+				) {
+
+					$field_data['options'] = \Jet_Engine_Tools::get_options_from_callback(
+						$field_data['options_callback'], true
+					);
+
+					unset( $field_data['options_callback'] );
+				}
+
 				$meta_fields[ $key ] = $field_data;
+
 			}
 
 		}
@@ -769,6 +781,8 @@ class Relation {
 		}
 
 		$this->delete_rows( $parent_object, $child_object, true );
+		$this->db->reset_cache();
+		$this->meta_db->reset_cache();
 
 	}
 
@@ -803,7 +817,10 @@ class Relation {
 
 		$this->db->delete( $delete_where );
 
-		wp_cache_flush();
+		do_action( 'jet-engine/relation/delete/after', $parent_object, $child_object, $clear_meta, $this );
+
+		$this->db->reset_cache();
+		$this->meta_db->reset_cache();
 
 	}
 
@@ -845,6 +862,9 @@ class Relation {
 				}
 			}
 		}
+
+		$this->db->reset_cache();
+		$this->meta_db->reset_cache();
 
 	}
 
@@ -888,7 +908,10 @@ class Relation {
 
 		}
 
-		wp_cache_flush();
+		do_action( 'jet-engine/relation/update-all-meta/after', $parent_object, $child_object, $new_meta, $this );
+
+		$this->db->reset_cache();
+		$this->meta_db->reset_cache();
 
 	}
 
@@ -999,6 +1022,9 @@ class Relation {
 
 		wp_cache_delete( $cache_key, $this->rel_cache_group );
 
+		$this->db->reset_cache();
+		$this->meta_db->reset_cache();
+
 	}
 
 	/**
@@ -1033,6 +1059,9 @@ class Relation {
 
 		$cache_key = $this->get_cache_key( $parent_object, $child_object );
 		wp_cache_delete( $cache_key, $this->rel_cache_group );
+
+		$this->db->reset_cache();
+		$this->meta_db->reset_cache();
 
 	}
 
@@ -1321,8 +1350,9 @@ class Relation {
 
 		do_action( 'jet-engine/relation/update/after', $parent_object, $child_object, $item_id, $this );
 
+		$this->db->reset_cache();
+		$this->meta_db->reset_cache();
 		$this->reset_update_context();
-		wp_cache_flush();
 
 		if ( ! empty( $item_id ) && is_array( $item_id ) ) {
 			return $item_id;

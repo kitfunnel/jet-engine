@@ -74,7 +74,7 @@ class Dashboard_Tab extends Base_Tab {
 			><?php _e( 'Performance tweaks', 'jet-engine' ); ?></div>
 			<cx-vui-switcher
 				label="<?php _e( 'Optimized DOM', 'jet-engine' ); ?>"
-				description="<?php _e( 'Remove some additional HTML wrappers from JetEngine elements. Number of removed wrappers depends on each element specific', 'jet-engine' ); ?>"
+				description="<?php _e( 'Remove some additional HTML wrappers from JetEngine elements. The number of removed wrappers depends on each specific element', 'jet-engine' ); ?>"
 				:wrapper-css="[ 'equalwidth', 'collpase-sides' ]"
 				v-model="tweaks.optimized_dom"
 			></cx-vui-switcher>
@@ -82,7 +82,7 @@ class Dashboard_Tab extends Base_Tab {
 				v-if="tweaks.optimized_dom"
 				label="<?php _e( 'Warning:', 'jet-engine' ); ?>"
 				:wrapper-css="[ 'collpase-sides' ]"
-				description="<?php _e( 'This feature changes HTML output and styling options of JetEngine-related widgets. So after enabling it you need to re-style all used JetEngine widgets', 'jet-engine' ); ?>"
+				description="<?php _e( 'This feature changes the HTML output and styling of JetEngine-related widgets. So after enabling it, you need to re-style all used JetEngine widgets', 'jet-engine' ); ?>"
 			></cx-vui-component-wrapper>
 			<cx-vui-switcher
 				label="<?php _e( 'Elementor Views', 'jet-engine' ); ?>"
@@ -98,10 +98,11 @@ class Dashboard_Tab extends Base_Tab {
 			></cx-vui-switcher>
 			<cx-vui-switcher
 				label="<?php _e( 'Bricks Views', 'jet-engine' ); ?>"
-				description="<?php _e( 'Enable/disable all bricks-related functionality', 'jet-engine' ); ?>"
+				description="<?php _e( 'Enable/disable all Bricks-related functionality', 'jet-engine' ); ?>"
 				:wrapper-css="[ 'equalwidth', 'collpase-sides' ]"
 				v-model="tweaks.enable_bricks_views"
 			></cx-vui-switcher>
+			<?php do_action( 'jet-engine/modules/performance/tweaks-tab' ); ?>
 			<cx-vui-button
 				button-style="accent"
 				size="mini"

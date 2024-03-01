@@ -43,6 +43,8 @@ class License_Manager {
 
 		$this->maybe_theme_core_license_exist();
 
+		$this->maybe_modify_license_data();
+
 		$this->maybe_site_not_activated();
 
 	}
@@ -123,6 +125,7 @@ class License_Manager {
 			);
 		}
 
+		$responce_data = $this->maybe_modify_responce_data( $responce_data );
 		$responce_data = $this->maybe_modify_tm_responce_data( $responce_data );
 
 		switch ( $license_action ) {
@@ -149,6 +152,23 @@ class License_Manager {
 				'data'    => $responce_data,
 			)
 		);
+	}
+
+	/**
+	 * @param $responce
+	 * @return array|mixed
+	 */
+	public function maybe_modify_responce_data( $responce = array() ) {
+
+		if ( empty( $responce ) ) {
+			return $responce;
+		}
+
+		if ( isset( $responce['sites'] ) && ! empty( $responce['sites'] ) ) {
+			$responce['sites'] = [];
+		}
+
+		return $responce;
 	}
 
 	/**
@@ -374,6 +394,37 @@ class License_Manager {
 	}
 
 	/**
+	 * @return void
+	 */
+	public function maybe_modify_license_data() {
+		$license_list = Utils::get_license_data( 'license-list', array() );
+
+		if ( empty( $license_list ) ) {
+			return;
+		}
+
+		foreach ( $license_list as $license_key => $license_data ) {
+
+			if ( ! isset( $license_data['licenseDetails'] ) ) {
+				continue;
+			}
+
+			$license_details = $license_data['licenseDetails'];
+
+			if ( isset( $license_details['sites'] ) ) {
+				$license_list[ $license_key ]['licenseDetails']['sites'] = [];
+			}
+
+			if ( ! isset( $license_details['site_url'] ) ) {
+				$license_list[ $license_key ]['licenseDetails']['site_url'] = strtolower( Utils::get_site_url() );
+			}
+		}
+
+		Utils::set_license_data( 'license-list', $license_list );
+
+	}
+
+	/**
 	 * [maybe_theme_core_license_exist description]
 	 * @return [type] [description]
 	 */
@@ -424,10 +475,31 @@ class License_Manager {
 	 * @return [type] [description]
 	 */
 	public function maybe_site_not_activated() {
-
 		$license_list = Utils::get_license_data( 'license-list', array() );
 
 		if ( empty( $license_list ) ) {
+			Dashboard::get_instance()->notice_manager->register_notice( array(
+				'id'      => 'site-not-activated',
+				'page'    => [ 'license-page', 'welcome-page' ],
+				'preset'  => 'alert',
+				'type'    => 'danger',
+				'title'   => esc_html__( 'The site is not activated', 'jet-dashboard' ),
+				'message' => esc_html__( 'Your license key is not activated for this site. Go to the license manager and activate your key', 'jet-dashboard' ),
+				'buttons' => array(
+					array(
+						'label' => esc_html__( 'Activate', 'jet-dashboard' ),
+						'url'   => add_query_arg(
+							array(
+								'page'    => 'jet-dashboard-license-page',
+								'subpage' => 'license-manager'
+							),
+							admin_url( 'admin.php' )
+						),
+						'style' => 'accent',
+					)
+				),
+			) );
+
 			return;
 		}
 
@@ -441,17 +513,39 @@ class License_Manager {
 
 			$license_details = $license_data['licenseDetails'];
 
-			if ( ! isset( $license_details['sites'] ) ) {
+			if ( ! isset( $license_details['site_url'] ) ) {
 				continue;
 			}
 
-			$sites = array_merge( $sites, $license_details['sites'] );
+			$sites[] = $license_details['site_url'];
 		}
 
 		$current_site = strtolower( Utils::get_site_url() );
 
 		if ( ! in_array( $current_site, $sites ) ) {
 			Utils::set_license_data( 'license-list', [] );
+
+			Dashboard::get_instance()->notice_manager->register_notice( array(
+				'id'      => 'license-data-cleared',
+				'page'    => 'license-page',
+				'preset'  => 'alert',
+				'type'    => 'danger',
+				'title'   => esc_html__( 'License data deleted', 'jet-dashboard' ),
+				'message' => esc_html__( 'This site is not activated for this license. The old key data has been deleted. Go to the license manager and activate your key', 'jet-dashboard' ),
+				'buttons' => array(
+					array(
+						'label' => esc_html__( 'Activate', 'jet-dashboard' ),
+						'url'   => add_query_arg(
+							array(
+								'page'    => 'jet-dashboard-license-page',
+								'subpage' => 'license-manager'
+							),
+							admin_url( 'admin.php' )
+						),
+						'style' => 'accent',
+					)
+				),
+			) );
 		}
 	}
 

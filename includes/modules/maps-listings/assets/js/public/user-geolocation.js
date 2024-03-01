@@ -24,6 +24,9 @@
 							longitude: position.coords.longitude,
 						}
 
+						// To prevent adds to Active Filters.
+						window.JetSmartFilters?.filterGroups?.[ this.provider + '/' + this.queryId ]?.activeItemsExceptions.push( this.name );
+
 						this.emitFitersApply();
 
 					} );
@@ -32,6 +35,10 @@
 			}
 
 			processData() {
+			}
+
+			reset() {
+				// Left empty to prevent reset when clicking the Remove filters button
 			}
 
 		};

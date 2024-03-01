@@ -61,22 +61,22 @@ class Jet_Engine_Listings_Preview {
 
 				$post_type = $document->get_settings( 'listing_post_type' );
 
-				$post = get_posts( array(
+				$post = get_posts( apply_filters( 'jet-engine/listings/document/post-preview-query-args', [
 					'post_type'        => $post_type,
 					'numberposts'      => 1,
 					'orderby'          => 'date',
 					'order'            => 'DESC',
 					'suppress_filters' => false,
-				) );
+				], $document ) );
 
 				if ( ! empty( $post ) ) {
 
 					jet_engine()->listings->data->set_current_object( $post[0] );
 
-					$this->args = array(
+					$this->args = apply_filters( 'jet-engine/listings/document/preview-args', [
 						'post_type' => $post_type,
 						'p'         => $post[0]->ID,
-					);
+					], $document );
 
 				}
 
@@ -95,15 +95,15 @@ class Jet_Engine_Listings_Preview {
 
 					jet_engine()->listings->data->set_current_object( $terms[0] );
 
-					$this->args = array(
-						'tax_query' => array(
-							array(
+					$this->args = apply_filters( 'jet-engine/listings/document/preview-args', [
+						'tax_query' => [
+							[
 								'taxonomy' => $tax,
 								'field'    => 'slug',
 								'terms'    => $terms[0]->slug,
-							),
-						),
-					);
+							],
+						],
+					], $document );
 
 				}
 

@@ -335,15 +335,10 @@ class WC_Product_Query extends \Jet_Engine\Query_Builder\Queries\Base_Query {
 
 				break;
 
-			case 'post__not_in ':
+			case 'post__not_in':
 
 				if ( ! empty( $this->final_query['exclude'] ) ) {
-					$this->final_query['exclude'] = array_intersect( $this->final_query['exclude'], $value );
-
-					if ( empty( $this->final_query['exclude'] ) ) {
-						$this->final_query['exclude'] = array( PHP_INT_MAX );
-					}
-
+					$this->final_query['exclude'] = array_merge( $this->final_query['exclude'], $value );
 				} else {
 					$this->final_query['exclude'] = $value;
 				}

@@ -1265,7 +1265,7 @@ if ( ! class_exists( 'Jet_Engine_Booking_Forms_Builder' ) ) {
 				);
 			}
 
-			return apply_filters( 'jet-engine/forms/booking/form-action-url', $action, $this );
+			return apply_filters( 'jet-engine/forms/booking/form-action-url', esc_url( $action ), $this );
 
 		}
 

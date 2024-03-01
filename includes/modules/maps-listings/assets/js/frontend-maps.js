@@ -19,7 +19,7 @@
 			};
 
 			$.each( widgets, function( widget, callback ) {
-				window.elementorFrontend.hooks.addAction( 'frontend/element_ready/' + widget, callback );
+				window.elementorFrontend?.hooks?.addAction( 'frontend/element_ready/' + widget, callback );
 			});
 
 		},
@@ -317,6 +317,8 @@
 			width  = parseInt( general.width, 10 );
 			offset = parseInt( general.offset, 10 );
 
+			$container.data( 'mapInstance', map );
+
 			if ( markers ) {
 				$.each( markers, function( index, markerData ) {
 					markerData.markerClustering = general.markerClustering;
@@ -333,7 +335,9 @@
 				markerCluster = mapProvider.getMarkerCluster( {
 					map: map,
 					markers: gmMarkers,
-					clustererImg: general.clustererImg
+					clustererImg: general.clustererImg,
+					clusterMaxZoom: general.clusterMaxZoom,
+					clusterRadius: general.clusterRadius,
 				} );
 
 				JetEngineMaps.clusterersData[ mapID ] = markerCluster;
@@ -447,10 +451,15 @@
 
 		customInitMapBySelector: function( $selector ) {
 			var $mapBlock = $selector.closest( '[data-is-block="jet-engine/maps-listing"]' ),
+				$mapBricks = $selector.closest( '[data-is-block="jet-engine/bricks-maps-listing"]' ),
 				$mapElWidget = $selector.closest( '.elementor-widget-jet-engine-maps-listing' );
 
 			if ( $mapBlock.length ) {
 				JetEngineMaps.widgetMap( $mapBlock );
+			}
+
+			if ( $mapBricks.length ) {
+				JetEngineMaps.bricksWidgetMap( $mapBricks );
 			}
 
 			if ( $mapElWidget.length ) {
@@ -486,6 +495,12 @@
 
 			if ( window.JetPopupFrontend && window.JetPopupFrontend.initAttachedPopups ) {
 				window.JetPopupFrontend.initAttachedPopups( $selector );
+			}
+
+			// Reinit the common events for a map popup.
+			// Only for Google provider as event propagation is disabled.
+			if ( window.JetEngine && mapProvider.getId && 'google' === mapProvider.getId() ) {
+				JetEngine.commonEvents( $selector );
 			}
 
 		},

@@ -133,10 +133,12 @@ class Provider extends \Jet_Smart_Filters_Provider_Base {
 	 */
 	public function add_new_markers_to_response( $response ) {
 
-		$settings    = jet_smart_filters()->query->get_query_settings();
-		$instance    = jet_engine()->listings->get_render_instance( 'maps-listing', $settings );
+		$settings = jet_smart_filters()->query->get_query_settings();
+		$instance = jet_engine()->listings->get_render_instance( 'maps-listing', $settings );
 
 		jet_engine()->listings->data->set_listing_by_id( $settings['lisitng_id'] );
+
+		$instance->setup_listing_props();
 
 		$query       = $instance->get_query( $settings );
 		$map_markers = $instance->get_map_markers( $query, $settings, false );

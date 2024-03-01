@@ -35,7 +35,8 @@ class Get_Users_For_Store_Item extends \Jet_Engine_Base_Macros {
 				'options' => array(
 					''                    => esc_html__( 'Select...', 'jet-engine' ),
 					'post'                => esc_html__( 'Post', 'jet-engine' ),
-					'current_user'        => esc_html__( 'Current user', 'jet-engine' ),
+					'wp_user'             => esc_html__( 'Current user (global)', 'jet-engine' ),
+					'current_user'        => esc_html__( 'Current user (for current scope)', 'jet-engine' ),
 					'queried_user'        => esc_html__( 'Queried user', 'jet-engine' ),
 					'current_post_author' => esc_html__( 'Current post author', 'jet-engine' ),
 				),
@@ -63,6 +64,15 @@ class Get_Users_For_Store_Item extends \Jet_Engine_Base_Macros {
 		}
 
 		switch ( $context ) {
+
+			case 'wp_user':
+				$user = wp_get_current_user();
+
+				if ( $user ) {
+					$item_id = $user->ID;
+				}
+
+				break;
 
 			case 'current_user':
 			case 'user':

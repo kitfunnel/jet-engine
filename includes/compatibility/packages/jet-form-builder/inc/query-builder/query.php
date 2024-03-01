@@ -135,13 +135,13 @@ class Form_Query extends \Jet_Engine\Query_Builder\Queries\SQL_Query {
 							array(
 								'column'  => 'field_name',
 								'compare' => '=',
-								'value'   => $row['key'],
+								'value'   => ! empty( $row['key'] ) ? $row['key'] : '',
 							),
 							array(
 								'column'  => 'field_value',
-								'compare' => $row['compare'],
-								'value'   => $row['value'],
-								'type'    => $row['type'],
+								'compare' => ! empty( $row['compare'] ) ? $row['compare'] : '=',
+								'value'   => ! empty( $row['value'] ) ? $row['value'] : '',
+								'type'    => ! empty( $row['type'] ) ? $row['type'] : false,
 							),
 						), 'rf' ), 
 						'AND', 
@@ -169,6 +169,14 @@ class Form_Query extends \Jet_Engine\Query_Builder\Queries\SQL_Query {
 					'column'   => 'user_id',
 					'compare'  => '=',
 					'value'    => $this->final_query['user_id'],
+				);
+			}
+
+			if ( ! empty( $this->final_query['record__in'] ) ) {
+				$where[] = array(
+					'column'   => 'id',
+					'compare'  => 'IN',
+					'value'    => implode( ',', array_map( 'absint', $this->final_query['record__in'] ) ),
 				);
 			}
 
@@ -254,6 +262,20 @@ class Form_Query extends \Jet_Engine\Query_Builder\Queries\SQL_Query {
 		if ( $limit ) {
 			$limit_offset .= " LIMIT";
 			$offset = ! empty( $this->final_query['offset'] ) ? absint( $this->final_query['offset'] ) : 0;
+
+			if ( ! $is_count && ! empty( $this->final_query['_page'] ) ) {
+				$page    = absint( $this->final_query['_page'] );
+				$pages   = $this->get_items_pages_count();
+				$_offset = ( $page - 1 ) * $this->get_items_per_page();
+				$offset  = $offset + $_offset;
+
+				// Fixed the following issue:
+				// The last page has an incorrect number of posts if the `Total Query Limit` number
+				// is not a multiple of the `Per Page Limit` number.
+				if ( $page == $pages ) {
+					$limit = $this->get_items_total_count() - $_offset;
+				}
+			}
 
 			if ( $offset ) {
 				$limit_offset .= " $offset, $limit";

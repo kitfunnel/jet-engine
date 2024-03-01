@@ -14,6 +14,7 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Link' ) ) {
 
 		private $show_field = true;
 		private $is_delete_link = false;
+		private $raw_url = null;
 
 		public function get_name() {
 			return 'jet-listing-dynamic-link';
@@ -51,25 +52,10 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Link' ) ) {
 
 		}
 
-		/**
-		 * Render link tag
-		 *
-		 * @param  [type] $settings   [description]
-		 * @param  [type] $base_class [description]
-		 * @return [type]             [description]
-		 */
-		public function render_link( $settings, $base_class ) {
-
-			$format = '<a href="%1$s" class="%2$s__link"%5$s%6$s%7$s>%3$s%4$s</a>';
+		public function get_link_url( $settings ) {
+			
 			$source = ! empty( $settings['dynamic_link_source'] ) ? $settings['dynamic_link_source'] : '_permalink';
 			$custom = ! empty( $settings['dynamic_link_source_custom'] ) ? $settings['dynamic_link_source_custom'] : '';
-
-			$pre_render_link = apply_filters( 'jet-engine/listings/dynamic-link/pre-render-link', false, $settings, $base_class, $this );
-
-			if ( $pre_render_link ) {
-				echo $pre_render_link;
-				return;
-			}
 
 			$url = apply_filters(
 				'jet-engine/listings/dynamic-link/custom-url',
@@ -104,7 +90,58 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Link' ) ) {
 				$url = get_permalink( $url[0] );
 			}
 
-			$label = $this->get_link_label( $settings, $base_class, $url );
+			if ( is_object( $url ) && $url instanceof WP_Post ) {
+				$url = get_permalink( $url->ID );
+			}
+
+			$this->raw_url = $url;
+
+			$url = $this->maybe_add_query_args( $url, $settings );
+
+			if ( ! empty( $settings['url_prefix'] ) ) {
+				$url = esc_attr( $settings['url_prefix'] ) . $url;
+			}
+
+			if ( ! empty( $settings['url_anchor'] ) ) {
+
+				$url_anchor = $settings['url_anchor'];
+
+				$macros_context = jet_engine()->listings->macros->get_macros_context();
+
+				jet_engine()->listings->macros->set_macros_context( $object_context );
+
+				$url_anchor = jet_engine()->listings->macros->do_macros( $url_anchor );
+
+				// Reset macros context to initial.
+				jet_engine()->listings->macros->set_macros_context( $macros_context );
+
+				$url = $url . '#' . esc_attr( $url_anchor );
+			}
+
+			return $url;
+
+		}
+
+		/**
+		 * Render link tag
+		 *
+		 * @param  [type] $settings   [description]
+		 * @param  [type] $base_class [description]
+		 * @return [type]             [description]
+		 */
+		public function render_link( $settings, $base_class ) {
+
+			$format = '<a href="%1$s" class="%2$s__link"%5$s%6$s%7$s>%3$s%4$s</a>';
+
+			$pre_render_link = apply_filters( 'jet-engine/listings/dynamic-link/pre-render-link', false, $settings, $base_class, $this );
+
+			if ( $pre_render_link ) {
+				echo $pre_render_link;
+				return;
+			}
+
+			$url   = $this->get_link_url( $settings );
+			$label = $this->get_link_label( $settings, $base_class, $this->raw_url );
 			$icon  = $this->get_link_icon( $settings, $base_class );
 
 			if ( is_wp_error( $url ) ) {
@@ -125,36 +162,9 @@ if ( ! class_exists( 'Jet_Engine_Render_Dynamic_Link' ) ) {
 				$target = ' target="_blank"';
 			}
 
-			if ( ! empty( $settings['hide_if_empty'] ) && empty( $url ) ) {
+			if ( ! empty( $settings['hide_if_empty'] ) && empty( $this->raw_url ) ) {
 				$this->show_field = false;
 				return;
-			}
-
-			if ( is_object( $url ) && $url instanceof WP_Post ) {
-				$url = get_permalink( $url->ID );
-			}
-
-			$url = $this->maybe_add_query_args( $url, $settings );
-
-			if ( ! empty( $settings['url_prefix'] ) ) {
-				$url = esc_attr( $settings['url_prefix'] ) . $url;
-			}
-
-			if ( ! empty( $settings['url_anchor'] ) ) {
-
-				$url_anchor = $settings['url_anchor'];
-
-				$macros_context = jet_engine()->listings->macros->get_macros_context();
-				$object_context = ! empty( $settings['object_context'] ) ? $settings['object_context'] : false;
-
-				jet_engine()->listings->macros->set_macros_context( $object_context );
-
-				$url_anchor = jet_engine()->listings->macros->do_macros( $url_anchor );
-
-				// Reset macros context to initial.
-				jet_engine()->listings->macros->set_macros_context( $macros_context );
-
-				$url = $url . '#' . esc_attr( $url_anchor );
 			}
 
 			$custom_attrs = '';

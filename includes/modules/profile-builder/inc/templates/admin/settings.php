@@ -5,7 +5,9 @@
 ?>
 <div>
 	<div class="wrap">
-		<h1 class="cs-vui-title"><?php _e( 'User Profile Builder', 'jet-engine' ); ?></h1>
+		<h1 class="cs-vui-title" style="display:inline-block;"><?php 
+			_e( 'User Profile Builder', 'jet-engine' ); 
+		?></h1>
 		<?php
 			jet_engine()->get_video_help_popup( array(
 				'popup_title' => __( 'How to work with Profile Builder', 'jet-engine' ),

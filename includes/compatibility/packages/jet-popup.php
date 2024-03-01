@@ -186,8 +186,7 @@ if ( ! class_exists( 'Jet_Engine_Popup_Package' ) ) {
 								$query->final_query['object_id'] = $object_id;
 							}
 
-							$items = $query->get_items();
-
+							$items    = $query->get_items();
 							$post_obj = isset( $items[ $item_index ] ) ? $items[ $item_index ] : false;
 
 							break;
@@ -202,6 +201,16 @@ if ( ! class_exists( 'Jet_Engine_Popup_Package' ) ) {
 								$item_index = absint( $id_data[1] );
 
 								$query->setup_query();
+
+								if ( function_exists( 'jet_smart_filters' ) && ! empty( $popup_data['filtered_query'] ) ) {
+									$filtered_query = jet_smart_filters()->query->get_query_from_request( $popup_data['filtered_query'] );
+
+									if ( ! empty( $filtered_query ) ) {
+										foreach ( $filtered_query as $prop => $value ) {
+											$query->set_filtered_prop( $prop, $value );
+										}
+									}
+								}
 
 								$advanced_query = $query->get_advanced_query();
 
@@ -219,6 +228,12 @@ if ( ! class_exists( 'Jet_Engine_Popup_Package' ) ) {
 							}
 
 							break;
+
+						default:
+							$post_obj = apply_filters(
+								'jet-engine/compatibility/popup-package/query/' . $query->query_type . '/post-object',
+								$post_obj, $popup_data, $query, $query_id
+							);
 					}
 				}
 			}

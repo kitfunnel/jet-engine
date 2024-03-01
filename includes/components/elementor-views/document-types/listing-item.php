@@ -246,7 +246,7 @@ class Jet_Listing_Item_Document extends Elementor\Core\Base\Document {
 		$this->add_control(
 			'listing_link_aria_label',
 			array(
-				'label'   => __( 'Aria label attr', 'jet-engine' ),
+				'label'   => __( 'Aria label attr / Link text', 'jet-engine' ),
 				'type'    => Elementor\Controls_Manager::TEXT,
 				'default' => '',
 				'dynamic' => array(
@@ -286,6 +286,7 @@ class Jet_Listing_Item_Document extends Elementor\Core\Base\Document {
 
 	public function get_preview_as_query_args() {
 
+		/**
 		$preview_id      = (int) $this->get_settings( 'preview_id' );
 		$source          = $this->get_settings( 'listing_source' );
 		$post_type       = $this->get_settings( 'listing_post_type' );
@@ -293,17 +294,14 @@ class Jet_Listing_Item_Document extends Elementor\Core\Base\Document {
 		$repeater_source = $this->get_settings( 'repeater_source' );
 		$repeater_field  = $this->get_settings( 'repeater_field' );
 		$repeater_option = $this->get_settings( 'repeater_option' );
+		*/
 
-		$preview = new Jet_Engine_Listings_Preview( array(
-			'listing_source'    => $source,
-			'listing_post_type' => $post_type,
-			'listing_tax'       => $tax,
-			'repeater_source'   => $repeater_source,
-			'repeater_field'    => $repeater_field,
-			'repeater_option'   => $repeater_option,
-		), $this->get_main_id() );
+		$preview = new Jet_Engine_Listings_Preview( $this->get_settings(), $this->get_main_id() );
 
-		return $preview->get_preview_args();
+		return apply_filters(
+			'jet-engine/elementor-views/listing-document/preview-args',
+			$preview->get_preview_args(), $this 
+		);
 
 	}
 

@@ -63,6 +63,7 @@ class Filters {
 		}
 
 		$new_options = $this->get_glossary_options( $glossary_id, $options );
+		$new_options = ! empty( $new_options ) ? $new_options : array();
 		$type        = get_post_meta( $filter_id, '_filter_type', true );
 
 		if ( 'select' === $type ) {

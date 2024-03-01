@@ -550,6 +550,31 @@ class Maps_Listings extends Listing_Grid {
 			]
 		);
 
+		$this->register_jet_control(
+			'cluster_max_zoom',
+			[
+				'tab'         => 'content',
+				'label'       => esc_html__( 'Cluster Max Zoom', 'jet-engine' ),
+				'description' => esc_html__( 'Maximum zoom level that a marker can be part of a cluster', 'jet-engine' ),
+				'type'        => 'number',
+				'min'         => 1,
+				'max'         => 20,
+				'required'    => [ 'marker_clustering', '=', true ],
+			]
+		);
+
+		$this->register_jet_control(
+			'cluster_radius',
+			[
+				'tab'         => 'content',
+				'label'       => esc_html__( 'Cluster Radius', 'jet-engine' ),
+				'description' => esc_html__( 'Radius of each cluster when clustering markers in px', 'jet-engine' ),
+				'type'        => 'number',
+				'min'         => 10,
+				'required'    => [ 'marker_clustering', '=', true ],
+			]
+		);
+
 		$this->end_jet_control_group();
 
 		$this->start_jet_control_group( 'section_popup_settings' );

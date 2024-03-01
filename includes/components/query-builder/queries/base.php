@@ -11,6 +11,7 @@ abstract class Base_Query {
 	public $query_type    = null;
 	public $query_id      = null;
 	public $preview       = array();
+	public $cache_query   = true;
 
 	public $parsed_macros = array();
 
@@ -23,6 +24,7 @@ abstract class Base_Query {
 		$this->query         = ! empty( $args['query'] ) ? $args['query'] : false;
 		$this->dynamic_query = ! empty( $args['dynamic_query'] ) ? $args['dynamic_query'] : false;
 		$this->preview       = ! empty( $args['preview'] ) ? $args['preview'] : $this->preview;
+		$this->cache_query   = isset( $args['cache_query'] ) ? filter_var( $args['cache_query'], FILTER_VALIDATE_BOOLEAN ) : true;
 
 		$this->maybe_add_instance_fields_to_ui();
 
@@ -75,7 +77,7 @@ abstract class Base_Query {
 	 * @return [type]      [description]
 	 */
 	public function get_cached_data( $key = null ) {
-		return wp_cache_get( $this->get_query_hash( $key ) );
+		return $this->cache_query ? wp_cache_get( $this->get_query_hash( $key ) ) : false;
 	}
 
 	/**
@@ -86,7 +88,7 @@ abstract class Base_Query {
 	 * @return [type]       [description]
 	 */
 	public function update_query_cache( $data = null, $key = null ) {
-		return wp_cache_set( $this->get_query_hash( $key ), $data );
+		return $this->cache_query ? wp_cache_set( $this->get_query_hash( $key ), $data ) : false;
 	}
 
 	/**

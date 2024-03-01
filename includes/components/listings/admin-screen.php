@@ -68,6 +68,42 @@ class Jet_Engine_Listing_Admin_Screen {
 	}
 
 	/**
+	 * Save template by given data. Could be used to update listing from anywhere.
+	 * Ensures hooks consistency
+	 */
+	public function update_template( $post_data, $view_type ) {
+
+		/**
+		 * Filter listing template data before create/update listing
+		 * @var array
+		 */
+		$post_data = apply_filters( 'jet-engine/templates/create/data', $post_data );
+
+		if ( ! empty( $post_data['ID'] ) ) {
+			$template_id = wp_update_post( $post_data );
+		} else {
+			$template_id = wp_insert_post( $post_data );
+		}
+
+		if ( ! $template_id ) {
+			return false;
+		}
+
+		/**
+		 * Global created hook
+		 */
+		do_action( 'jet-engine/templates/created', $template_id, $post_data );
+
+		/**
+		 * View-specific created hook
+		 */
+		do_action( 'jet-engine/templates/created/' . $view_type, $template_id, $post_data );
+
+		return $template_id;
+
+	}
+
+	/**
 	 * Create new template
 	 *
 	 * @return [type] [description]
@@ -91,6 +127,7 @@ class Jet_Engine_Listing_Admin_Screen {
 		);
 
 		$is_edit = false;
+		$default_view = 'elementor';
 
 		if ( ! empty( $_REQUEST['_listing_id'] ) ) {
 			
@@ -98,8 +135,10 @@ class Jet_Engine_Listing_Admin_Screen {
 				$this->send_request_error( esc_html__( 'You don\'t have permissions to do this', 'jet-engine' ) );
 			}
 
-			$is_edit = true;
+			$is_edit         = true;
 			$post_data['ID'] = absint( $_REQUEST['_listing_id'] );
+			$default_view    = get_post_meta( $_REQUEST['_listing_id'], '_listing_type', true );
+
 		}
 
 		$title = isset( $_REQUEST['template_name'] ) ? esc_attr( $_REQUEST['template_name'] ) : '';
@@ -114,7 +153,7 @@ class Jet_Engine_Listing_Admin_Screen {
 		$rep_source = ! empty( $_REQUEST['repeater_source'] ) ? esc_attr( $_REQUEST['repeater_source'] ) : '';
 		$rep_field  = ! empty( $_REQUEST['repeater_field'] ) ? esc_attr( $_REQUEST['repeater_field'] ) : '';
 		$rep_option = ! empty( $_REQUEST['repeater_option'] ) ? esc_attr( $_REQUEST['repeater_option'] ) : '';
-		$view_type  = ! empty( $_REQUEST['listing_view_type'] ) ? $_REQUEST['listing_view_type'] : 'elementor';
+		$view_type  = ! empty( $_REQUEST['listing_view_type'] ) ? $_REQUEST['listing_view_type'] : $default_view;
 
 		$listing = array(
 			'source'    => $source,
@@ -135,27 +174,11 @@ class Jet_Engine_Listing_Admin_Screen {
 			$post_data['meta_input']['_elementor_data'] = '[{"id":"d75c8e8","elType":"section","settings":{"jedv_conditions":[{"_id":"b441260"}]},"elements":[{"id":"31b3d2a","elType":"column","settings":{"_column_size":100,"_inline_size":null,"jedv_conditions":[{"_id":"8e60841"}]},"elements":[{"id":"2c37cde","elType":"widget","settings":{"dynamic_excerpt_more":"...","date_format":"F j, Y","num_dec_point":".","num_thousands_sep":",","multiselect_delimiter":", ","dynamic_field_format":"%s","jedv_conditions":[{"_id":"a47f557"}]},"elements":[],"widgetType":"jet-listing-dynamic-field"}],"isInner":false}],"isInner":false}]';
 		}
 
-		$post_data = apply_filters( 'jet-engine/templates/create/data', $post_data );
-
-		if ( ! empty( $post_data['ID'] ) ) {
-			$template_id = wp_update_post( $post_data );
-		} else {
-			$template_id = wp_insert_post( $post_data );
-		}
+		$template_id = $this->update_template( $post_data, $view_type );
 
 		if ( ! $template_id ) {
 			$this->send_request_error( esc_html__( 'Can\'t create template. Please try again', 'jet-engine' ) );
 		}
-
-		/**
-		 * Global created hook
-		 */
-		do_action( 'jet-engine/templates/created', $template_id, $post_data );
-
-		/**
-		 * View-specific created hook
-		 */
-		do_action( 'jet-engine/templates/created/' . $view_type, $template_id, $post_data );
 
 		$redirect = $this->get_edit_url( $view_type, $template_id );
 
@@ -298,19 +321,11 @@ class Jet_Engine_Listing_Admin_Screen {
 
 		$sources = jet_engine()->listings->post_type->get_listing_item_sources();
 		$views   = jet_engine()->listings->post_type->get_listing_views();
-		$data    = array();
+		$data    = array( 'main_popup' => true );
 
 		if ( $listing_id ) {
-			$data = get_post_meta( $listing_id, '_elementor_page_settings', true );
-			// Ensure we get all possible data to cover all cases
-			$all_meta = get_post_meta( $listing_id );
-
-			foreach ( $all_meta as $key => $value ) {
-				$all_meta[ $key ] = isset( $value[0] ) ? $value[0] : $value;
-			}
-
-			$title = get_the_title( $listing_id );
-			$data  = array_merge( $all_meta, array( 'template_name' => $title ), $data );	
+			$listing = jet_engine()->listings->get_new_doc( [], $listing_id );
+			$data    = $listing->get_settings();
 		}
 
 		ob_start();

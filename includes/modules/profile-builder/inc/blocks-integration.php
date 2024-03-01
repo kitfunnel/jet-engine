@@ -1,7 +1,7 @@
 <?php
 namespace Jet_Engine\Modules\Profile_Builder;
 
-class Blocks_Integration {
+class Blocks_Integration extends Base_Integration {
 
 	/**
 	 * Constructor for the class
@@ -70,44 +70,16 @@ class Blocks_Integration {
 	 */
 	public function register_pages_options( $config ) {
 
-		$pages    = array();
-		$settings = Module::instance()->settings->get();
+		$pages = array_map( function ( $page ) {
 
-		if ( ! empty( $settings['account_page_structure'] ) ) {
-
-			$options = array();
-
-			foreach ( $settings['account_page_structure'] as $page ) {
-				$options[] = array(
-					'value' => 'account_page::' . $page['slug'],
-					'label' => $page['title'],
-				);
+			if ( ! empty( $page['options'] ) ) {
+				$page['values'] = $page['options'];
+				unset( $page['options'] );
 			}
 
-			$pages[] = array(
-				'label'  => __( 'Account Page', 'jet-engine' ),
-				'values' => $options,
-			);
+			return $page;
 
-		}
-
-		if ( ! empty( $settings['enable_single_user_page'] ) && ! empty( $settings['user_page_structure'] ) ) {
-
-			$options = array();
-
-			foreach ( $settings['user_page_structure'] as $page ) {
-				$options[] = array(
-					'value' => 'single_user_page::' . $page['slug'],
-					'label' => $page['title'],
-				);
-			}
-
-			$pages[] = array(
-				'label'  => __( 'Single User Page', 'jet-engine' ),
-				'values' => $options,
-			);
-
-		}
+		}, $this->get_pages_for_options( 'blocks' ) );
 
 		if ( ! empty( $pages ) ) {
 			$config['profileBuilderPages'] = $pages;

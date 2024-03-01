@@ -65,6 +65,7 @@
 			} else {
 				setTimeout( function() {
 					self.$set( self.generalSettings, 'query_type', 'posts' );
+					self.$set( self.generalSettings, 'cache_query', true );
 				}, 1000 );
 			}
 

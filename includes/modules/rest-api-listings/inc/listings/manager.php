@@ -102,12 +102,19 @@ class Manager {
 			array( $this, 'setup_preview' )
 		);
 
+		add_action(
+			'jet-engine/maps-listing/sources/register',
+			array( $this, 'register_map_source' )
+		);
+
 	}
 
 	public function set_item_id( $id, $object ) {
 
 		if ( isset( $object->is_rest_api_endpoint ) ) {
-			if ( isset( $object->ID ) ) {
+			if ( isset( $object->_rest_api_item_id ) ) {
+				$id = $object->_rest_api_item_id;
+			} elseif ( isset( $object->ID ) ) {
 				$id = $object->ID;
 			} elseif ( isset( $object->_ID ) ) {
 				$id = $object->_ID;
@@ -317,10 +324,11 @@ class Manager {
 	 * @return [type] [description]
 	 */
 	public function register_listing_popup_options( $data ) {
+
 		?>
 		<div class="jet-listings-popup__form-row jet-template-listing jet-template-<?php echo $this->source; ?>">
 			<label for="listing_rest_endpoint"><?php esc_html_e( 'From API endpoint:', 'jet-engine' ); ?></label>
-			<select id="listing_rest_endpoint" name="listing_rest_endpoint">
+			<select id="listing_rest_endpoint" name="rest_api_endpoint" class="jet-listings-popup__control">
 				<option value=""><?php _e( 'Select endpoint...', 'jet-engine' ); ?></option>
 				<?php
 				foreach ( Module::instance()->settings->get() as $endpoint ) {
@@ -335,6 +343,7 @@ class Manager {
 			?></select>
 		</div>
 		<?php
+
 	}
 
 	/**
@@ -349,7 +358,7 @@ class Manager {
 			return $template_data;
 		}
 
-		if ( empty( $_REQUEST['listing_rest_endpoint'] ) ) {
+		if ( empty( $_REQUEST['rest_api_endpoint'] ) ) {
 			return $template_data;
 		}
 
@@ -357,7 +366,7 @@ class Manager {
 			return $template_data;
 		}
 
-		$rest_endpoint = esc_attr( $_REQUEST['listing_rest_endpoint'] );
+		$rest_endpoint = esc_attr( $_REQUEST['rest_api_endpoint'] );
 
 		$template_data['meta_input']['_listing_data']['post_type']                    = $rest_endpoint;
 		$template_data['meta_input']['_elementor_page_settings']['listing_post_type'] = $rest_endpoint;
@@ -435,6 +444,16 @@ class Manager {
 	 */
 	public function add_image_source_fields( $groups, $for ) {
 		return $this->add_source_fields( $groups );
+	}
+
+	/**
+	 * Register source for maps listings.
+	 *
+	 * @param object $sources_manager
+	 */
+	public function register_map_source( $sources_manager ) {
+		require_once Module::instance()->module_path( 'listings/maps-source.php' );
+		$sources_manager->register_source( new Rest_API_Maps_Source() );
 	}
 
 }

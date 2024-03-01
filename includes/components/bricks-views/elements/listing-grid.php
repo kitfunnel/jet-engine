@@ -164,6 +164,7 @@ class Listing_Grid extends Base {
 			'item'        => '> .jet-listing-grid > .jet-listing-grid__items > .jet-listing-grid__item',
 			'loader'      => '.jet-listing-grid__loader',
 			'loader-text' => '.jet-listing-grid__loader-text',
+			'slider-list' => '.jet-listing-grid__slider > .jet-listing-grid__items > .slick-list',
 			'slider-icon' => '.jet-listing-grid__slider-icon',
 			'prev-arrow'  => '.jet-listing-grid__slider-icon.prev-arrow',
 			'next-arrow'  => '.jet-listing-grid__slider-icon.next-arrow',
@@ -563,6 +564,20 @@ class Listing_Grid extends Base {
 		);
 
 		$this->register_jet_control(
+			'pause_on_hover',
+			[
+				'tab'      => 'content',
+				'label'    => esc_html__( 'Pause On Hover', 'jet-engine' ),
+				'type'     => 'checkbox',
+				'default'  => true,
+				'required' => [
+					[ 'carousel_enabled', '=', true ],
+					[ 'autoplay', '=', true ],
+				],
+			]
+		);
+
+		$this->register_jet_control(
 			'infinite',
 			[
 				'tab'      => 'content',
@@ -767,6 +782,29 @@ class Listing_Grid extends Base {
 		$this->end_jet_control_group();
 
 		$this->start_jet_control_group( 'section_slider_style' );
+
+		$this->register_jet_control(
+			'center_moder_padding',
+			[
+				'tab'      => 'style',
+				'label'    => esc_html__( 'Center Mode Padding', 'jet-engine' ),
+				'type'     => 'number',
+				'units'    => true,
+				'css'      => [
+					[
+						'property'  => 'padding-left',
+						'selector'  => $css_scheme['slider-list'],
+						'important' => true,
+					],
+					[
+						'property'  => 'padding-right',
+						'selector'  => $css_scheme['slider-list'],
+						'important' => true,
+					],
+				],
+				'required' => [ 'center_mode', '=', true ],
+			]
+		);
 
 		$this->register_jet_control(
 			'arrows_box_size',
@@ -1382,6 +1420,7 @@ class Listing_Grid extends Base {
 
 		$attrs['arrows']            = $attrs['arrows'] ?? false;
 		$attrs['autoplay']          = $attrs['autoplay'] ?? false;
+		$attrs['pause_on_hover']    = $attrs['pause_on_hover'] ?? false;
 		$attrs['infinite']          = $attrs['infinite'] ?? false;
 		$attrs['not_found_message'] = $attrs['not_found_message'] ?? '';
 

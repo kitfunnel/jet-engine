@@ -116,16 +116,9 @@ class Listing {
 	 */
 	public function add_dynamic_field_props( $groups ) {
 
-		$relations = jet_engine()->relations->get_active_relations();
+		$prefixed_rels_list = $this->get_prefixed_relations_sources();
 
-		if ( ! empty( $relations ) ) {
-
-			$prefixed_rels_list = array();
-
-			foreach ( $relations as $rel ) {
-				$prefixed_rels_list[ $this->relations_source . '_children_' . $rel->get_id() ] = __( 'Children from', 'jet-engine' ) . ' ' . $rel->get_relation_name();
-				$prefixed_rels_list[ $this->relations_source . '_parents_' . $rel->get_id() ] = __( 'Parents from', 'jet-engine' ) . ' ' . $rel->get_relation_name();
-			}
+		if ( ! empty( $prefixed_rels_list ) ) {
 
 			$groups[] = array(
 				'label'   => __( 'Related items for current object', 'jet-engine' ),
@@ -134,6 +127,24 @@ class Listing {
 		}
 
 		return $groups;
+	}
+
+	public function get_prefixed_relations_sources() {
+
+		$relations = jet_engine()->relations->get_active_relations();
+		$prefixed_rels_list = array();
+
+		if ( ! empty( $relations ) ) {
+
+			foreach ( $relations as $rel ) {
+				$prefixed_rels_list[ $this->relations_source . '_children_' . $rel->get_id() ] = __( 'Children from', 'jet-engine' ) . ' ' . $rel->get_relation_name();
+				$prefixed_rels_list[ $this->relations_source . '_parents_' . $rel->get_id() ] = __( 'Parents from', 'jet-engine' ) . ' ' . $rel->get_relation_name();
+			}
+
+		}
+
+		return $prefixed_rels_list;
+
 	}
 
 	/**

@@ -20,17 +20,7 @@
 
 		commonInit: function() {
 
-			$( document )
-				.on( 'click.JetEngine', '.jet-calendar-nav__link', JetEngine.switchCalendarMonth )
-				.on( 'click.JetEngine', '.jet-calendar-week__day-mobile-overlay', JetEngine.showCalendarEvent )
-				.on( 'click.JetEngine', '.jet-listing-dynamic-link__link[data-delete-link="1"]', JetEngine.showConfirmDeleteDialog )
-				.on( 'jet-filter-content-rendered', JetEngine.maybeReinitSlider )
-				.on( 'click.JetEngine', '.jet-add-to-store', JetEngine.addToStore )
-				.on( 'click.JetEngine', '.jet-remove-from-store', JetEngine.removeFromStore )
-				.on( 'click.JetEngine', '.jet-engine-listing-overlay-wrap:not([data-url*="event=hover"])', JetEngine.handleListingItemClick )
-				.on( 'jet-filter-content-rendered', JetEngine.filtersCompatibility )
-				.on( 'click.JetEngine', '.jet-container[data-url]', JetEngine.handleContainerURL )
-				.on( 'change.JetEngine', '.jet-listing-dynamic-link .qty', JetEngine.handleProductQuantityChange );
+			JetEngine.commonEvents();
 
 			$( window ).on( 'jet-popup/render-content/ajax/success', JetEngine.initStores );
 
@@ -54,6 +44,22 @@
 			JetEngine.initStores();
 			JetEngine.customUrlActions.init();
 
+		},
+
+		commonEvents: function( $scope ) {
+			$scope = $scope || $( document );
+
+			$scope
+				.on( 'click.JetEngine', '.jet-calendar-nav__link', JetEngine.switchCalendarMonth )
+				.on( 'click.JetEngine', '.jet-calendar-week__day-mobile-overlay', JetEngine.showCalendarEvent )
+				.on( 'click.JetEngine', '.jet-listing-dynamic-link__link[data-delete-link="1"]', JetEngine.showConfirmDeleteDialog )
+				.on( 'jet-filter-content-rendered', JetEngine.maybeReinitSlider )
+				.on( 'click.JetEngine', '.jet-add-to-store', JetEngine.addToStore )
+				.on( 'click.JetEngine', '.jet-remove-from-store', JetEngine.removeFromStore )
+				.on( 'click.JetEngine', '.jet-engine-listing-overlay-wrap:not([data-url*="event=hover"])', JetEngine.handleListingItemClick )
+				.on( 'jet-filter-content-rendered', JetEngine.filtersCompatibility )
+				.on( 'click.JetEngine', '.jet-container[data-url]', JetEngine.handleContainerURL )
+				.on( 'change.JetEngine', '.jet-listing-dynamic-link .qty', JetEngine.handleProductQuantityChange );
 		},
 
 		handleProductQuantityChange: function ( event ) {
@@ -383,7 +389,12 @@
 
 			}
 
+			if ( $this.hasClass( 'jet-store-processing' ) ) {
+				return;
+			}
+
 			$this.css( 'opacity', 0.3 );
+			$this.addClass( 'jet-store-processing' );
 
 			$.ajax({
 				url: JetEngineSettings.ajaxurl,
@@ -397,6 +408,7 @@
 			}).done( function( response ) {
 
 				$this.css( 'opacity', 1 );
+				$this.removeClass( 'jet-store-processing' );
 
 				if ( response.success ) {
 
@@ -467,6 +479,7 @@
 
 			} ).fail( function( jqXHR, textStatus, errorThrown ) {
 				$this.css( 'opacity', 1 );
+				$this.removeClass( 'jet-store-processing' );
 				alert( errorThrown );
 			} );
 
@@ -579,7 +592,12 @@
 				return;
 			}
 
+			if ( $this.hasClass( 'jet-store-processing' ) ) {
+				return;
+			}
+
 			$this.css( 'opacity', 0.3 );
+			$this.addClass( 'jet-store-processing' );
 
 			$( document ).trigger( 'jet-engine-on-add-to-store', [ $this, args ] );
 
@@ -595,6 +613,7 @@
 			}).done( function( response ) {
 
 				$this.css( 'opacity', 1 );
+				$this.removeClass( 'jet-store-processing' );
 
 				if ( response.success ) {
 
@@ -653,6 +672,7 @@
 
 			} ).fail( function( jqXHR, textStatus, errorThrown ) {
 				$this.css( 'opacity', 1 );
+				$this.removeClass( 'jet-store-processing' );
 				alert( errorThrown );
 			} );
 
@@ -870,7 +890,9 @@
 				var $gridItems     = $scope.closest( '.jet-listing-grid__items' ),
 					$gridItem      = $scope.closest( '.jet-listing-grid__item' ),
 					$calendarItem  = $scope.closest( '.jet-calendar-week__day-event' ),
-					$itemObject    = $scope.closest( '[data-item-object]' )
+					$itemObject    = $scope.closest( '[data-item-object]' ),
+					filterProvider = false,
+					filterQueryId  = 'default';
 
 				if ( $gridItems.length ) {
 					popupData['listingSource'] = $gridItems.data( 'listing-source' );
@@ -892,8 +914,10 @@
 
 				if ( $gridItem.length ) {
 					popupData['postId'] = $gridItem.data( 'post-id' );
+					filterProvider = 'jet-engine';
 				} else if ( $calendarItem.length ) {
 					popupData['postId'] = $calendarItem.data( 'post-id' );
+					filterProvider = 'jet-engine-calendar';
 				} else if ( $itemObject ) {
 					popupData['postId'] = $itemObject.data( 'item-object' );
 				} else if ( window.elementorFrontendConfig && window.elementorFrontendConfig.post ) {
@@ -902,6 +926,37 @@
 
 				if ( window.JetEngineFormsEditor && window.JetEngineFormsEditor.hasEditor ) {
 					popupData['hasEditor'] = true;
+				}
+
+				// Add the filtered query to the popup data
+				if ( window.JetSmartFilters ) {
+
+					switch ( filterProvider ) {
+						case 'jet-engine':
+							var nav = $gridItems.data( 'nav' );
+
+							if ( nav.widget_settings?._element_id ) {
+								filterQueryId = nav.widget_settings._element_id;
+							}
+							break;
+
+						case 'jet-engine-calendar':
+							var settings = $calendarItem.closest( '.jet-listing-calendar' ).data( 'settings' );
+
+							if ( settings._element_id ) {
+								filterQueryId = settings._element_id;
+							}
+							break;
+					}
+
+					filterProvider = window.JetPlugins.hooks.applyFilters( 'jet-engine.prepareJetPopupData.filterProvider', filterProvider, $scope, widgetData );
+					filterQueryId  = window.JetPlugins.hooks.applyFilters( 'jet-engine.prepareJetPopupData.filterQueryId', filterQueryId, $scope, widgetData );
+
+					if ( popupData.queryId && filterProvider
+						&& window.JetSmartFilters?.filterGroups?.[ filterProvider + '/' + filterQueryId ]?.currentQuery
+					) {
+						popupData['filtered_query'] = window.JetSmartFilters.filterGroups[ filterProvider + '/' + filterQueryId ].currentQuery;
+					}
 				}
 
 			}
@@ -1272,9 +1327,10 @@
 
 					this.wrapper = this.container.closest( '.jet-listing-grid' );
 
-					this.type  = this.settings.type || 'click';
-					this.page  = parseInt( this.container.data( 'page' ), 10 ) || 0;
-					this.pages = parseInt( this.container.data( 'pages' ), 10 ) || 0;
+					this.type      = this.settings.type || 'click';
+					this.page      = parseInt( this.container.data( 'page' ), 10 ) || 0;
+					this.pages     = parseInt( this.container.data( 'pages' ), 10 ) || 0;
+					this.queriedID = this.container.data( 'queried-id' ) || false;
 				},
 
 				init: function() {
@@ -1426,6 +1482,7 @@
 							query:          this.settings.query,
 							widgetSettings: this.settings.widget_settings,
 							page:           this.page,
+							queriedID:      this.queriedID,
 							preventCSS:     !! this.wrapper.find( '.jet-listing-grid__loader' ).length, // Prevent CSS if listing has the loader.
 						}, function( response ) {
 
@@ -1499,7 +1556,7 @@
 								}
 
 								if ( $widget.length ) {
-									$widget.find( '.jet-listing-grid' ).removeClass( 'jet-listing-grid--lazy-load' );
+									$widget.find( '.jet-listing-grid' ).first().removeClass( 'jet-listing-grid--lazy-load' );
 								}
 
 								JetEngine.widgetListingGrid( $widget );

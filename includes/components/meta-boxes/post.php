@@ -387,12 +387,14 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 						$prepared_options = $this->prepare_select_options( $field );
 						$result[ $field['name'] ]['options'] = $prepared_options['options'];
 
-						if ( ! empty( $prepared_options['default'] ) ) {
-							$result[ $field['name'] ]['value'] = $prepared_options['default'];
+						if ( ! empty( $prepared_options['options_callback'] ) 
+							&& is_callable( $prepared_options['options_callback'] ) 
+						) {
+							$result[ $field['name'] ]['options_callback'] = $prepared_options['options_callback'];
 						}
 
-						if ( ! empty( $field['options_callback'] ) ) {
-							$result[ $field['name'] ]['options_callback'] = $field['options_callback'];
+						if ( ! empty( $prepared_options['default'] ) ) {
+							$result[ $field['name'] ]['value'] = $prepared_options['default'];
 						}
 
 						$multiple = ! empty( $field['is_multiple'] ) ? $field['is_multiple'] : false;
@@ -411,16 +413,19 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 							$field['options'] = array();
 						}
 
-						$prepared_options                    = $this->prepare_select_options( $field );
+						$prepared_options = $this->prepare_select_options( $field );
+
+						if ( ! empty( $prepared_options['options_callback'] ) 
+							&& is_callable( $prepared_options['options_callback'] ) 
+						) {
+							$result[ $field['name'] ]['options_callback'] = $prepared_options['options_callback'];
+						}
+
 						$result[ $field['name'] ]['options'] = $prepared_options['options'];
 						$result[ $field['name'] ]['add_button_label'] = esc_html__( 'Add custom value', 'jet-engine' );
 
 						if ( ! empty( $prepared_options['default'] ) ) {
 							$result[ $field['name'] ]['value'] = $prepared_options['default'];
-						}
-
-						if ( ! empty( $field['options_callback'] ) ) {
-							$result[ $field['name'] ]['options_callback'] = $field['options_callback'];
 						}
 
 						$field['is_array'] = ! empty( $field['is_array'] ) ? $field['is_array'] : false;
@@ -440,19 +445,18 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 
 					case 'radio':
 
-						if ( empty( $field['options'] ) ) {
-							$field['options'] = array();
+						$prepared_options = $this->prepare_radio_options( [], $field );
+
+						if ( ! empty( $prepared_options['options_callback'] ) 
+							&& is_callable( $prepared_options['options_callback'] ) 
+						) {
+							$result[ $field['name'] ]['options_callback'] = $prepared_options['options_callback'];
 						}
 
-						$prepared_options                    = $this->prepare_radio_options( $field['options'], $field );
 						$result[ $field['name'] ]['options'] = $prepared_options['options'];
 
 						if ( ! Jet_Engine_Tools::is_empty( $prepared_options['default'] ) ) {
 							$result[ $field['name'] ]['value'] = $prepared_options['default'];
-						}
-
-						if ( ! empty( $field['options_callback'] ) ) {
-							$result[ $field['name'] ]['options_callback'] = $field['options_callback'];
 						}
 
 						if ( ! empty( $field['allow_custom'] ) && filter_var( $field['allow_custom'], FILTER_VALIDATE_BOOLEAN ) ) {
@@ -818,6 +822,12 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 				return;
 			}
 
+			$this->date_assets();
+
+		}
+
+		public function date_assets() {
+			
 			wp_enqueue_script( 'jquery-ui-datepicker' );
 			wp_enqueue_script( 'jquery-ui-slider' );
 
@@ -1043,6 +1053,12 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 
 						$prepared_options = $this->prepare_select_options( $field );
 
+						if ( ! empty( $prepared_options['options_callback'] ) 
+							&& is_callable( $prepared_options['options_callback'] ) 
+						) {
+							$field['options_callback'] = $prepared_options['options_callback'];
+						}
+
 						$result[ $field['name'] ]['options'] = $prepared_options['options'];
 
 						if ( ! empty( $prepared_options['default'] ) ) {
@@ -1069,7 +1085,14 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 							$field['options'] = array();
 						}
 
-						$prepared_options                    = $this->prepare_select_options( $field );
+						$prepared_options = $this->prepare_select_options( $field );
+
+						if ( ! empty( $prepared_options['options_callback'] ) 
+							&& is_callable( $prepared_options['options_callback'] ) 
+						) {
+							$field['options_callback'] = $prepared_options['options_callback'];
+						}
+
 						$result[ $field['name'] ]['options'] = $prepared_options['options'];
 
 						if ( ! empty( $prepared_options['default'] ) ) {
@@ -1097,7 +1120,14 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 							$field['options'] = array();
 						}
 
-						$prepared_options                    = $this->prepare_radio_options( $field['options'], $field );
+						$prepared_options = $this->prepare_radio_options( $field['options'], $field );
+						
+						if ( ! empty( $prepared_options['options_callback'] ) 
+							&& is_callable( $prepared_options['options_callback'] ) 
+						) {
+							$field['options_callback'] = $prepared_options['options_callback'];
+						}
+
 						$result[ $field['name'] ]['options'] = $prepared_options['options'];
 
 						if ( ! Jet_Engine_Tools::is_empty( $prepared_options['default'] ) ) {
@@ -1187,6 +1217,11 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 				return $result;
 			}
 
+			if ( is_callable( $options ) ) {
+				$result['options_callback'] = $options;
+				return $result;
+			}
+
 			foreach ( $options as $index => $option ) {
 
 				if ( ! isset( $option['key'] ) || ! is_array( $option ) ) {
@@ -1237,10 +1272,14 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 				'default' => false,
 			);
 
-			$options = ! empty( $field['options'] ) ? $field['options'] : array();
-			$options = $this->filter_options_list( $options, $field );
+			$options = $this->filter_options_list( [], $field );
 
 			if ( empty( $options ) ) {
+				return $result;
+			}
+
+			if ( is_callable( $options ) ) {
+				$result['options_callback'] = $options;
 				return $result;
 			}
 
@@ -1369,10 +1408,10 @@ if ( ! class_exists( 'Jet_Engine_CPT_Meta' ) ) {
 							$value = explode( ',', $value );
 							$value = array_map( 'trim', $value );
 						}
+				}
 
-						if ( in_array( $condition['operator'], array( 'empty', '!empty' ) ) ) {
-							$value = '';
-						}
+				if ( in_array( $condition['operator'], array( 'empty', '!empty' ) ) ) {
+					$value = '';
 				}
 
 				$is_checkbox     = ( 'checkbox' === $condition_field['type'] );

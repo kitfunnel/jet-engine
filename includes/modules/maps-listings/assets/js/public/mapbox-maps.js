@@ -40,6 +40,10 @@ window.JetEngineMapsProvider = function() {
 
 	this._activePopup = null;
 
+	this.getId = function() {
+		return 'mapbox';
+	}
+
 	this.initMap = function( container, settings ) {
 
 		settings = settings || {};

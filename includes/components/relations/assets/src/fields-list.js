@@ -46,7 +46,7 @@ class FieldsList extends Component {
 
 		const commonProps = {
 			key: 'field_' + field.type + field.name,
-			label: field.title,
+			label: field.title + ( field.required ? ' *' : '' ),
 			help: field.description ? <span dangerouslySetInnerHTML={{ __html: field.description }}/> : '',
 			value: this.state[ field.name ],
 			onChange: ( newVal ) => {
@@ -84,7 +84,12 @@ class FieldsList extends Component {
 
 			case 'radio':
 
-				commonProps.selected = commonProps.value;
+				if ( parseInt( commonProps.value, 10 ) == commonProps.value ) {
+					commonProps.selected = parseInt( commonProps.value, 10 );
+				} else {
+					commonProps.selected = commonProps.value;
+				}
+
 				delete( commonProps.value );
 
 				return <RadioControl

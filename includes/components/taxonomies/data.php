@@ -443,40 +443,6 @@ if ( ! class_exists( 'Jet_Engine_CPT_Tax_Data' ) ) {
 		}
 
 		/**
-		 * Sanitize meta fields
-		 *
-		 * @param  [type] $meta_fields [description]
-		 * @return [type]              [description]
-		 */
-		public function sanitize_meta_fields( $meta_fields ) {
-
-			foreach ( $meta_fields as $key => $field ) {
-
-				// If name is empty - create it from title, else - santize it
-				if ( empty( $field['name'] ) ) {
-					$field['name'] = $this->sanitize_slug( $field['title'] );
-				} else {
-					$field['name'] = $this->sanitize_slug( $field['name'] );
-				}
-
-				// If still empty - create random name
-				if ( empty( $field['name'] ) ) {
-					$field['name'] = '_field_' . rand( 10000, 99999 );
-				}
-
-				// If name in blak list - add underscore at start
-				if ( in_array( $field['name'], $this->meta_blacklist() ) ) {
-					$meta_fields[ $key ]['name'] = '_' . $field['name'];
-				} else {
-					$meta_fields[ $key ]['name'] = $field['name'];
-				}
-
-			}
-
-			return $meta_fields;
-		}
-
-		/**
 		 * Before item delete
 		 */
 		public function before_item_delete( $item_id ) {

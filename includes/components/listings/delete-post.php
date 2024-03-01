@@ -84,6 +84,8 @@ class Jet_Engine_Delete_Post {
 		}
 
 		if ( $redirect ) {
+			// Fixed '&' encoding
+			$redirect = str_replace( '&#038;', '&', $redirect );
 			wp_redirect( $redirect );
 			die();
 		}

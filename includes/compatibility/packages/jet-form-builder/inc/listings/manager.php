@@ -2,6 +2,7 @@
 namespace Jet_Engine\Compatibility\Packages\Jet_Form_Builder\Listings;
 
 use Jet_Engine\Compatibility\Packages\Jet_Form_Builder\Package;
+use Jet_Engine\Compatibility\Packages\Jet_Form_Builder\Query_Builder\Manager as QueryManager;
 
 // If this file is called directly, abort.
 if ( ! defined( 'WPINC' ) ) {
@@ -24,6 +25,14 @@ class Manager {
 
 		add_action( 'jet-engine/elementor-views/dynamic-tags/register', array( $this, 'register_dynamic_tags' ), 10, 2 );
 		add_action( 'jet-engine/register-macros', array( $this, 'register_macros' ) );
+
+		add_filter( 'jet-engine/listing/custom-post-id', array( $this, 'set_form_record_item_id' ), 10, 2 );
+
+		add_filter(
+			'jet-engine/compatibility/popup-package/query/' . QueryManager::instance()->slug . '/post-object',
+			array( $this, 'set_form_record_popup_object'),
+			10, 3
+		);
 
 	}
 
@@ -130,6 +139,34 @@ class Manager {
 			$value, 
 			$field_name 
 		);
+	}
+
+	public function set_form_record_item_id( $id, $object ) {
+
+		if ( isset( $object->jfb_ID ) ) {
+			$id = $object->jfb_ID;
+		}
+
+		return $id;
+	}
+
+	public function set_form_record_popup_object( $post_obj, $popup_data, $query ) {
+
+		$record_id = ! empty( $popup_data['postId'] ) ? absint( $popup_data['postId'] ) : false;
+
+		if ( ! $record_id ) {
+			return $post_obj;
+		}
+
+		$query->setup_query();
+
+		$query->final_query['record__in'] = array( $record_id );
+		$query->final_query['limit_per_page'] = 1;
+		$query->final_query['offset'] = 0;
+
+		$items = $query->get_items();
+
+		return isset( $items[0] ) ? $items[0] : $post_obj;
 	}
 
 	/**

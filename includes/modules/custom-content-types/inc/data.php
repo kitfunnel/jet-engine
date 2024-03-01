@@ -270,7 +270,7 @@ class Data extends \Jet_Engine_Base_Data {
 
 		}
 
-		return $meta_fields;
+		return parent::sanitize_meta_fields( $meta_fields );
 	}
 
 	public function get_item_by_id( $id ) {
@@ -332,6 +332,7 @@ class Data extends \Jet_Engine_Base_Data {
 			$meta_fields = jet_engine()->meta_boxes->data->sanitize_repeater_fields( $meta_fields );
 		}
 
+		$item['name']        = ( ! empty( $args['name'] ) ) ? $args['name'] : '';
 		$item['args']        = $args;
 		$item['meta_fields'] = $meta_fields;
 

@@ -1,9 +1,7 @@
 <?php
 namespace Jet_Engine\Modules\Profile_Builder;
 
-class Elementor_Integration {
-
-	public $pages = null;
+class Elementor_Integration extends Base_Integration {
 
 	/**
 	 * Constructor for the class
@@ -86,56 +84,6 @@ class Elementor_Integration {
 	}
 
 	/**
-	 * Get all profile pages list to use as options
-	 *
-	 * @return [type] [description]
-	 */
-	public function get_pages_for_options() {
-
-		if ( null === $this->pages ) {
-
-			$pages    = array();
-			$settings = Module::instance()->settings->get();
-
-			if ( ! empty( $settings['account_page_structure'] ) ) {
-
-				$options = array();
-
-				foreach ( $settings['account_page_structure'] as $page ) {
-					$options['account_page::' . $page['slug'] ] = $page['title'];
-				}
-
-				$pages[] = array(
-					'label'   => __( 'Account Page', 'jet-engine' ),
-					'options' => $options,
-				);
-
-			}
-
-			if ( ! empty( $settings['enable_single_user_page'] ) && ! empty( $settings['user_page_structure'] ) ) {
-
-				$options = array();
-
-				foreach ( $settings['user_page_structure'] as $page ) {
-					$options['single_user_page::' . $page['slug'] ] = $page['title'];
-				}
-
-				$pages[] = array(
-					'label'   => __( 'Single User Page', 'jet-engine' ),
-					'options' => $options,
-				);
-
-			}
-
-			$this->pages = $pages;
-
-		}
-
-		return $this->pages;
-
-	}
-
-	/**
 	 * Register link control
 	 *
 	 * @param  [type] $widget [description]
@@ -143,7 +91,7 @@ class Elementor_Integration {
 	 */
 	public function register_link_controls( $widget = null, $is_image = false ) {
 
-		$pages = $this->get_pages_for_options();
+		$pages = $this->get_pages_for_options( 'elementor' );
 
 		$condition = array(
 			'dynamic_link_source' => 'profile_page',

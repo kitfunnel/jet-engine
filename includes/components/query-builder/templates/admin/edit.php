@@ -53,6 +53,13 @@
 				label="<?php _e( 'Warning!', 'jet-engine' ); ?>"
 				description="<?php _e( 'Please make sure you set up the same ID for any filters used with this query.', 'jet-engine' ); ?>"
 			></cx-vui-component-wrapper>
+			<cx-vui-switcher
+				:label="'<?php _e( 'Cache Query', 'jet-engine' ); ?>'"
+				:description="'<?php _e( 'Whether to cache query results', 'jet-engine' ); ?>'"
+				:wrapper-css="[ 'equalwidth' ]"
+				:size="'fullwidth'"
+				v-model="generalSettings.cache_query"
+			></cx-vui-switcher>
 		</div>
 		<component
 			v-if="generalSettings.query_type && typesComponents[ generalSettings.query_type ]"

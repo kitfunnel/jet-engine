@@ -13,6 +13,7 @@ Vue.component( 'jet-query-dynamic-args', {
 			editSettings: false,
 			result: {},
 			advancedSettings: {},
+			searchKeyword: '',
 		};
 	},
 	created: function() {
@@ -74,6 +75,21 @@ Vue.component( 'jet-query-dynamic-args', {
 		}
 
 	},
+	computed: {
+		filteredMacrosList: function () {
+			let result = [ ...this.macrosList ];
+
+			if ( this.searchKeyword ) {
+				let searchKeyword = this.searchKeyword.toLowerCase();
+
+				result = result.filter( ( item ) => {
+					return ( item?.name && -1 !== item.name.toLowerCase().indexOf( searchKeyword ) );
+				} );
+			}
+
+			return result;
+		}
+	},
 	watch: {
 		advancedSettings: {
 			handler: function( newSettings ) {
@@ -95,6 +111,7 @@ Vue.component( 'jet-query-dynamic-args', {
 		applyMacros: function( macros, force ) {
 
 			force = force || false;
+			this.searchKeyword = '';
 
 			if ( macros ) {
 				this.$set( this.result, 'macros', macros.id );

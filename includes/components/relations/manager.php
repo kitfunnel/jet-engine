@@ -405,6 +405,19 @@ class Manager extends \Jet_Engine_Base_WP_Intance {
 			$this->register_legacy_relations( $legacy_relations );
 		}
 
+		add_action( 'jet-engine/relation/update/after', array( $this, 'flush_cache' ), 10, 0 );
+		add_action( 'jet-engine/relation/delete/after', array( $this, 'flush_cache' ), 10, 0 );
+		add_action( 'jet-engine/relation/update-all-meta/after', array( $this, 'flush_cache' ), 10, 0 );
+
+	}
+
+	/**
+	 * Flush cache after relation(meta) update / delete
+	 *
+	 * @return void
+	 */
+	public function flush_cache() {
+		wp_cache_flush();
 	}
 
 	/**
